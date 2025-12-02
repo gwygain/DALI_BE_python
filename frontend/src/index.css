@@ -1,0 +1,39 @@
+:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #333;
+  background-color: #f9f9f9;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* DALI Theme Colors */
+  --primary-color: #a1127c;
+  --primary-gradient: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+  --text-color: #333;
+  --text-light: #666;
+  --background: #f9f9f9;
+  --white: #ffffff;
+  --border-color: #eee;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.3;
+}

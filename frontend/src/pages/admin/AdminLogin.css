@@ -1,0 +1,154 @@
+.admin-login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+}
+
+.admin-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+}
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.admin-logo .logo-icon {
+  background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  position: relative;
+}
+
+.admin-logo .logo-d {
+  font-size: 1rem;
+  position: absolute;
+  top: 2px;
+  left: 8px;
+}
+
+.admin-logo .logo-text {
+  font-size: 1.4rem;
+}
+
+.admin-logo .logo-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #a1127c;
+}
+
+.admin-nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.admin-nav-links a,
+.admin-nav-links span {
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+}
+
+.admin-nav-links .active {
+  color: #a1127c;
+}
+
+.admin-login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: 2rem;
+}
+
+.admin-login-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 20px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.admin-login-card h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.admin-login-card > p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #a1127c;
+}
+
+.error-message {
+  background: #fee;
+  color: #c00;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  padding: 0.75rem 2rem;
+  border-radius: 25px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-full {
+  width: 100%;
+  text-align: center;
+}
