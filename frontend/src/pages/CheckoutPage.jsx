@@ -20,6 +20,7 @@ const CheckoutPage = () => {
   const [shippingFee, setShippingFee] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [storeSearch, setStoreSearch] = useState('');
   
   // Address form
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -382,17 +383,52 @@ const CheckoutPage = () => {
                   {deliveryMethod === 'Pickup Delivery' && (
                     <div className="store-selection">
                       <h4>Select pickup store:</h4>
-                      {stores.map((store) => (
-                        <label key={store.store_id} className="store-option">
-                          <input
-                            type="radio"
-                            name="store"
-                            checked={selectedStore === store.store_id}
-                            onChange={() => setSelectedStore(store.store_id)}
-                          />
-                          <span>{store.store_name}</span>
-                        </label>
-                      ))}
+                      <input
+                        type="text"
+                        className="store-search-input"
+                        placeholder="Search for a store (e.g., city or store name)..."
+                        value={storeSearch}
+                        onChange={(e) => setStoreSearch(e.target.value)}
+                      />
+                      <div className="store-list">
+                        {stores
+                          .filter((store) => {
+                            if (!storeSearch) return true;
+                            const searchLower = storeSearch.toLowerCase();
+                            return (
+                              store.store_name?.toLowerCase().includes(searchLower) ||
+                              store.location?.toLowerCase().includes(searchLower) ||
+                              store.city?.toLowerCase().includes(searchLower) ||
+                              store.province?.toLowerCase().includes(searchLower)
+                            );
+                          })
+                          .map((store) => (
+                            <label key={store.store_id} className="store-option">
+                              <input
+                                type="radio"
+                                name="store"
+                                checked={selectedStore === store.store_id}
+                                onChange={() => setSelectedStore(store.store_id)}
+                              />
+                              <div className="store-info">
+                                <span className="store-name">{store.store_name}</span>
+                                {store.location && <span className="store-location">{store.location}</span>}
+                              </div>
+                            </label>
+                          ))}
+                        {stores.filter((store) => {
+                          if (!storeSearch) return true;
+                          const searchLower = storeSearch.toLowerCase();
+                          return (
+                            store.store_name?.toLowerCase().includes(searchLower) ||
+                            store.location?.toLowerCase().includes(searchLower) ||
+                            store.city?.toLowerCase().includes(searchLower) ||
+                            store.province?.toLowerCase().includes(searchLower)
+                          );
+                        }).length === 0 && (
+                          <p className="no-stores-found">No stores found matching "{storeSearch}"</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

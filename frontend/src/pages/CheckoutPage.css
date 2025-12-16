@@ -260,6 +260,74 @@
   color: #333;
 }
 
+.store-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+
+.store-search-input:focus {
+  outline: none;
+  border-color: #a1127c;
+}
+
+.store-search-input::placeholder {
+  color: #999;
+}
+
+.store-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.store-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.store-option:hover {
+  background: #f8f9fa;
+}
+
+.store-option input[type="radio"] {
+  margin-top: 0.25rem;
+}
+
+.store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.store-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.store-location {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.no-stores-found {
+  text-align: center;
+  color: #666;
+  padding: 1.5rem;
+  font-size: 0.9rem;
+}
+
 /* Order Summary */
 .checkout-summary {
   background: white;

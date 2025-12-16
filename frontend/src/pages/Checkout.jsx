@@ -23,6 +23,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addingAddress, setAddingAddress] = useState(false);
+  const [storeSearch, setStoreSearch] = useState('');
 
   // Priority fee addition (matches backend)
   const priorityFeeAddition = 100;
@@ -80,6 +81,12 @@ const Checkout = () => {
   };
 
   const handleShippingSubmit = async () => {
+    // Validate store selection for pickup
+    if (deliveryMethod === 'Pickup Delivery' && !selectedStoreId) {
+      setError('Please select a pickup store');
+      return;
+    }
+    
     try {
       const response = await checkoutService.setShipping(
         deliveryMethod,
@@ -356,23 +363,61 @@ const Checkout = () => {
             {deliveryMethod === 'Pickup Delivery' && (
               <div id="store-pickup-selector" style={{ display: 'block' }}>
                 <h4>Select Pickup Store</h4>
-                <div id="store-list-results">
-                  {stores.map((store) => (
-                    <div key={store.store_id} className="delivery-option">
-                      <input
-                        type="radio"
-                        name="storeId"
-                        value={store.store_id}
-                        id={`store-${store.store_id}`}
-                        checked={selectedStoreId === store.store_id}
-                        onChange={() => setSelectedStoreId(store.store_id)}
-                      />
-                      <label htmlFor={`store-${store.store_id}`}>
-                        <strong>{store.store_name}</strong>
-                        <p>{store.store_address}</p>
-                      </label>
-                    </div>
-                  ))}
+                <input
+                  type="text"
+                  className="store-search-input"
+                  placeholder="Search for a store (e.g., city or store name)..."
+                  value={storeSearch}
+                  onChange={(e) => setStoreSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    marginBottom: '1rem'
+                  }}
+                />
+                <div id="store-list-results" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {stores
+                    .filter((store) => {
+                      if (!storeSearch) return true;
+                      const searchLower = storeSearch.toLowerCase();
+                      return (
+                        store.store_name?.toLowerCase().includes(searchLower) ||
+                        store.store_address?.toLowerCase().includes(searchLower) ||
+                        store.location?.toLowerCase().includes(searchLower)
+                      );
+                    })
+                    .map((store) => (
+                      <div key={store.store_id} className="delivery-option">
+                        <input
+                          type="radio"
+                          name="storeId"
+                          value={store.store_id}
+                          id={`store-${store.store_id}`}
+                          checked={selectedStoreId === store.store_id}
+                          onChange={() => setSelectedStoreId(store.store_id)}
+                        />
+                        <label htmlFor={`store-${store.store_id}`}>
+                          <strong>{store.store_name}</strong>
+                          <p>{store.store_address}</p>
+                        </label>
+                      </div>
+                    ))}
+                  {stores.filter((store) => {
+                    if (!storeSearch) return true;
+                    const searchLower = storeSearch.toLowerCase();
+                    return (
+                      store.store_name?.toLowerCase().includes(searchLower) ||
+                      store.store_address?.toLowerCase().includes(searchLower) ||
+                      store.location?.toLowerCase().includes(searchLower)
+                    );
+                  }).length === 0 && (
+                    <p style={{ textAlign: 'center', color: '#666', padding: '1rem' }}>
+                      No stores found matching "{storeSearch}"
+                    </p>
+                  )}
                 </div>
               </div>
             )}

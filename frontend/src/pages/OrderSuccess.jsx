@@ -13,7 +13,6 @@ const OrderSuccess = () => {
           Thank you for your purchase. Your order ID is{' '}
           <strong>#{orderId}</strong>.
         </p>
-        <p>We've sent a confirmation to your email address.</p>
         <div className="success-actions">
           <Link to="/shop" className="btn btn-secondary">
             Continue Shopping
