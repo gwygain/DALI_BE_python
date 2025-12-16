@@ -254,7 +254,12 @@ const Profile = () => {
                             </strong>{' '}
                             | <span>{addr.phone_number}</span>
                           </p>
-                          <p>{addr.full_address || addr.street_address}</p>
+                          <p style={{ margin: '4px 0' }}>
+                            {addr.additional_info && <span>{addr.additional_info}, </span>}
+                            {addr.barangay?.barangay_name && <span>{addr.barangay.barangay_name}, </span>}
+                            {addr.city?.city_name && <span>{addr.city.city_name}, </span>}
+                            {addr.province?.province_name && <span>{addr.province.province_name}</span>}
+                          </p>
                           <div className="address-tags">
                             {addr.is_default && (
                               <span className="tag-default">Default Address</span>
