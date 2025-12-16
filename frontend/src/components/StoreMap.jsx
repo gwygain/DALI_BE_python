@@ -1,25 +1,29 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 
-// Fix for default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+// Custom pink marker icon using SVG data URL
+const pinkIcon = new L.DivIcon({
+  className: 'custom-pink-marker',
+  html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+    <path fill="#E91E63" stroke="#C2185B" stroke-width="1" d="M12 0C5.4 0 0 5.4 0 12c0 7.2 12 24 12 24s12-16.8 12-24C24 5.4 18.6 0 12 0z"/>
+    <circle fill="white" cx="12" cy="12" r="5"/>
+  </svg>`,
+  iconSize: [24, 36],
+  iconAnchor: [12, 36],
+  popupAnchor: [0, -36]
 });
 
 const StoreMap = ({ stores, selectedStore, onStoreSelect }) => {
   const [mapCenter, setMapCenter] = useState([14.5995, 120.9842]); // Manila default
 
   useEffect(() => {
-    if (selectedStore && selectedStore.latitude && selectedStore.longitude) {
-      setMapCenter([selectedStore.latitude, selectedStore.longitude]);
+    if (selectedStore && selectedStore.store_lat && selectedStore.store_lng) {
+      setMapCenter([parseFloat(selectedStore.store_lat), parseFloat(selectedStore.store_lng)]);
     } else if (stores && stores.length > 0) {
-      const firstStoreWithCoords = stores.find(s => s.latitude && s.longitude);
+      const firstStoreWithCoords = stores.find(s => s.store_lat && s.store_lng);
       if (firstStoreWithCoords) {
-        setMapCenter([firstStoreWithCoords.latitude, firstStoreWithCoords.longitude]);
+        setMapCenter([parseFloat(firstStoreWithCoords.store_lat), parseFloat(firstStoreWithCoords.store_lng)]);
       }
     }
   }, [selectedStore, stores]);
@@ -32,22 +36,24 @@ const StoreMap = ({ stores, selectedStore, onStoreSelect }) => {
       key={`${mapCenter[0]}-${mapCenter[1]}`}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; Google'
+        url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
       />
       {stores.map((store) =>
-        store.latitude && store.longitude ? (
+        store.store_lat && store.store_lng ? (
           <Marker
             key={store.store_id}
-            position={[store.latitude, store.longitude]}
+            position={[parseFloat(store.store_lat), parseFloat(store.store_lng)]}
+            icon={pinkIcon}
             eventHandlers={{
               click: () => onStoreSelect && onStoreSelect(store),
             }}
           >
+            <Tooltip direction="top" offset={[0, -30]} permanent={false}>
+              {store.store_name}
+            </Tooltip>
             <Popup>
-              <strong>{store.name}</strong>
-              <br />
-              {store.address}
+              <strong>{store.store_name}</strong>
             </Popup>
           </Marker>
         ) : null

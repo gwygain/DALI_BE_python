@@ -34,7 +34,7 @@ const Stores = () => {
 
     const searchStores = async () => {
       try {
-        const data = await storeService.searchStores(query);
+        const data = await storeService.getStores(query);
         setFilteredStores(data);
       } catch (error) {
         console.error('Error searching stores:', error);
@@ -84,8 +84,7 @@ const Stores = () => {
                         : 'none',
                   }}
                 >
-                  <h3>{store.name}</h3>
-                  <p>{store.address}</p>
+                  <h3>{store.store_name}</h3>
                 </div>
               ))}
             </>
