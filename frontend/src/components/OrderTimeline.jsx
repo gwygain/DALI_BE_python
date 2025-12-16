@@ -32,8 +32,8 @@ const OrderTimeline = ({ history }) => {
           <li key={index} className="timeline-item">
             <div className={`timeline-dot ${getStatusClass(item.status)}`}></div>
             <div className="timeline-content">
-              <p className="timeline-description">{item.description}</p>
-              <p className="timeline-timestamp">{formatDate(item.timestamp)}</p>
+              <p className="timeline-description">{item.status}</p>
+              <p className="timeline-timestamp">{formatDate(item.event_timestamp)}</p>
               {item.notes && <p className="timeline-notes">{item.notes}</p>}
             </div>
           </li>

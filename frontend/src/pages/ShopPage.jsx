@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { productsAPI } from '../api/api';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 import './ShopPage.css';
 
 const ShopPage = () => {
@@ -15,6 +16,7 @@ const ShopPage = () => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('popular');
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   const [addingToCart, setAddingToCart] = useState(null);
 
   useEffect(() => {
@@ -101,12 +103,18 @@ const ShopPage = () => {
     });
   };
 
-  const handleAddToCart = async (productId) => {
+  const handleAddToCart = async (productId, productName) => {
     setAddingToCart(productId);
     try {
-      await addToCart(productId, 1);
+      const result = await addToCart(productId, 1);
+      if (result.success) {
+        showToast(`${productName} added to cart!`, 'success');
+      } else {
+        showToast(result.error || 'Failed to add to cart', 'error');
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showToast('Failed to add to cart', 'error');
     } finally {
       setAddingToCart(null);
     }
@@ -237,7 +245,7 @@ const ShopPage = () => {
                     <p className="product-price">₱ {parseFloat(product.product_price).toFixed(0)}</p>
                     <button
                       className={`btn btn-primary btn-small ${product.product_quantity <= 0 ? 'out-of-stock' : ''}`}
-                      onClick={() => handleAddToCart(product.product_id)}
+                      onClick={() => handleAddToCart(product.product_id, product.product_name)}
                       disabled={product.product_quantity <= 0 || addingToCart === product.product_id}
                     >
                       {product.product_quantity <= 0 

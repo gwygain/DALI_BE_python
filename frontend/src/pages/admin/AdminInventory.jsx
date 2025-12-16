@@ -130,13 +130,13 @@ const AdminInventory = () => {
                     <div className="product-image-container">
                       <img
                         src={`/images/products/${product.image}`}
-                        alt={product.name}
+                        alt={product.product_name}
                       />
                     </div>
                     <div className="product-card-info">
-                      <p className="product-card-category">{product.category}</p>
-                      <h3 className="product-card-name">{product.name}</h3>
-                      <p className="product-price">{formatPrice(product.price)}</p>
+                      <p className="product-card-category">{product.product_category}</p>
+                      <h3 className="product-card-name">{product.product_name}</h3>
+                      <p className="product-price">{formatPrice(product.product_price)}</p>
                     </div>
                   </Link>
                   <div className="product-card-actions">

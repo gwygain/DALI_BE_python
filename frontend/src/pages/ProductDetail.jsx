@@ -2,17 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { productService } from '../services';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   const [product, setProduct] = useState(null);
   const [maxAllowedToAdd, setMaxAllowedToAdd] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
-  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -36,17 +37,15 @@ const ProductDetail = () => {
     e.preventDefault();
     setAddingToCart(true);
     setError('');
-    setSuccess('');
 
     const result = await addToCart(product.product_id, quantity);
 
     if (result.success) {
-      setSuccess('Added to cart!');
+      showToast(`${product.product_name} added to cart!`, 'success');
       setMaxAllowedToAdd((prev) => prev - quantity);
       setQuantity(1);
-      setTimeout(() => setSuccess(''), 3000);
     } else {
-      setError(result.error);
+      showToast(result.error || 'Failed to add to cart', 'error');
     }
 
     setAddingToCart(false);
@@ -101,7 +100,6 @@ const ProductDetail = () => {
         <h1>{product.product_name}</h1>
         <p className="product-detail-price">{formatPrice(product.product_price)}</p>
 
-        {success && <div className="auth-success">{success}</div>}
         {error && <div className="auth-error">{error}</div>}
 
         {/* Add to Cart Form */}
@@ -143,7 +141,7 @@ const ProductDetail = () => {
 
         <div className="product-description">
           <h3>Description</h3>
-          <p>{product.description || 'No description available.'}</p>
+          <p>{product.product_description || 'No description available.'}</p>
         </div>
       </div>
     </main>

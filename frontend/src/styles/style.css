@@ -535,6 +535,11 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+.add-to-cart-btn.added {
+    background: #28a745;
+    cursor: default;
 }
 .add-to-cart-btn-disabled {
     width: 100%;

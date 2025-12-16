@@ -88,7 +88,7 @@ const AdminProductDetail = () => {
     <main className="product-detail-container container">
       {/* Product Image */}
       <div className="product-detail-image">
-        <img src={`/images/products/${product.image}`} alt={product.name} />
+        <img src={`/images/products/${product.image}`} alt={product.product_name} />
       </div>
 
       {/* Product Info */}
@@ -106,8 +106,8 @@ const AdminProductDetail = () => {
           ← Back to Inventory
         </Link>
 
-        <h1>{product.name}</h1>
-        <p className="product-detail-price">{formatPrice(product.price)}</p>
+        <h1>{product.product_name}</h1>
+        <p className="product-detail-price">{formatPrice(product.product_price)}</p>
 
         {success && <div className="auth-success">{success}</div>}
         {error && <div className="auth-error">{error}</div>}
@@ -147,16 +147,16 @@ const AdminProductDetail = () => {
         <div className="product-description" style={{ marginTop: '30px' }}>
           <h3>Product Details</h3>
           <p>
-            <strong>Category:</strong> {product.category}
+            <strong>Category:</strong> {product.product_category}
           </p>
-          {product.subcategory && (
+          {product.product_subcategory && (
             <p>
-              <strong>Subcategory:</strong> {product.subcategory}
+              <strong>Subcategory:</strong> {product.product_subcategory}
             </p>
           )}
           <p>
             <strong>Description:</strong>{' '}
-            {product.description || 'No description available.'}
+            {product.product_description || 'No description available.'}
           </p>
         </div>
       </div>

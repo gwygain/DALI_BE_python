@@ -280,10 +280,16 @@
 .btn-primary {
   background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
   color: white;
+  transition: background 0.3s ease;
 }
 
 .btn-primary:hover {
   opacity: 0.9;
+}
+
+.btn-primary.added {
+  background: linear-gradient(135deg, #28a745 0%, #34c759 100%);
+  cursor: default;
 }
 
 .btn-outline {

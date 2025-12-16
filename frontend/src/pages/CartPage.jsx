@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 import './CartPage.css';
 
 const CartPage = () => {
-  const { cart, loading, updateQuantity, removeFromCart } = useCart();
+  const { cart, loading, updateQuantity, removeFromCart, clearCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleQuantityChange = async (productId, newQuantity) => {
@@ -22,6 +24,17 @@ const CartPage = () => {
       await removeFromCart(productId);
     } catch (error) {
       console.error('Error removing item:', error);
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (window.confirm('Are you sure you want to clear your entire cart?')) {
+      const result = await clearCart();
+      if (result.success) {
+        showToast('Cart cleared successfully', 'success');
+      } else {
+        showToast(result.error || 'Failed to clear cart', 'error');
+      }
     }
   };
 
@@ -74,7 +87,7 @@ const CartPage = () => {
                 <div key={item.product_id} className="cart-item">
                   <div className="item-product">
                     <img 
-                      src={item.image || `https://via.placeholder.com/80x80?text=Product`} 
+                      src={item.image ? `/images/products/${item.image}` : `/images/products/default.png`} 
                       alt={item.product_name}
                     />
                     <span>{item.product_name}</span>
@@ -122,6 +135,13 @@ const CartPage = () => {
               </div>
               <button className="btn btn-primary btn-full" onClick={handleCheckout}>
                 Proceed to Checkout
+              </button>
+              <button 
+                className="btn btn-outline" 
+                onClick={handleClearCart} 
+                style={{ marginTop: '40px', padding: '8px 16px', fontSize: '13px' }}
+              >
+                Clear Cart
               </button>
             </div>
           </div>

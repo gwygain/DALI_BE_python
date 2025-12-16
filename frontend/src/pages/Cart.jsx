@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 
 const Cart = () => {
-  const { cartItems, subtotal, loading, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, subtotal, loading, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { showToast } = useToast();
 
   const formatPrice = (price) => {
     return `₱${price.toLocaleString('en-PH', {
@@ -18,6 +20,17 @@ const Cart = () => {
 
   const handleRemove = async (productId) => {
     await removeFromCart(productId);
+  };
+
+  const handleClearCart = async () => {
+    if (window.confirm('Are you sure you want to clear your entire cart?')) {
+      const result = await clearCart();
+      if (result.success) {
+        showToast('Cart cleared successfully', 'success');
+      } else {
+        showToast(result.error || 'Failed to clear cart', 'error');
+      }
+    }
   };
 
   if (loading) {
@@ -47,7 +60,7 @@ const Cart = () => {
               <div key={item.product_id} className="cart-item-row">
                 <div className="cart-product-info">
                   <img
-                    src={item.image || `/images/products/default.png`}
+                    src={item.image ? `/images/products/${item.image}` : `/images/products/default.png`}
                     alt={item.product_name}
                   />
                   <div>
@@ -103,6 +116,13 @@ const Cart = () => {
             <Link to="/checkout" className="btn btn-primary checkout-btn">
               Continue to checkout
             </Link>
+            <button 
+              className="btn btn-outline" 
+              onClick={handleClearCart} 
+              style={{ marginTop: '40px', padding: '8px 16px', fontSize: '13px' }}
+            >
+              Clear Cart
+            </button>
           </div>
         </div>
       ) : (

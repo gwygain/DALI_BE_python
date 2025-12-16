@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useToast } from './Toast';
 
 const ProductCard = ({ product, availableToAdd = null }) => {
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -17,8 +19,13 @@ const ProductCard = ({ product, availableToAdd = null }) => {
   const handleAddToCart = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await addToCart(product.product_id, quantity);
+    const result = await addToCart(product.product_id, quantity);
     setLoading(false);
+    if (result.success) {
+      showToast(`${product.product_name} added to cart!`, 'success');
+    } else {
+      showToast(result.error || 'Failed to add to cart', 'error');
+    }
     setQuantity(1);
   };
 

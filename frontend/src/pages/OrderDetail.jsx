@@ -114,7 +114,7 @@ const OrderDetail = () => {
 
   const subtotal =
     order.order_items?.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
+      (sum, item) => sum + parseFloat(item.product.product_price) * item.quantity,
       0
     ) || 0;
   const shippingFee = order.total_price - subtotal;
@@ -139,7 +139,7 @@ const OrderDetail = () => {
               <div className="pickup-info-box">
                 <h4>Click & Collect Order</h4>
                 <p>
-                  To be collected from: <strong>{order.order_pickup.store?.name}</strong>
+                  To be collected from: <strong>{order.order_pickup.store?.store_name}</strong>
                 </p>
               </div>
             )}
@@ -222,13 +222,13 @@ const OrderDetail = () => {
                 <div className="product-col">
                   <img
                     src={`/images/products/${item.product.image}`}
-                    alt={item.product.name}
+                    alt={item.product.product_name}
                   />
-                  <span>{item.product.name}</span>
+                  <span>{item.product.product_name}</span>
                 </div>
-                <div>{formatPrice(item.product.price)}</div>
+                <div>{formatPrice(item.product.product_price)}</div>
                 <div>{item.quantity}</div>
-                <div>{formatPrice(item.product.price * item.quantity)}</div>
+                <div>{formatPrice(parseFloat(item.product.product_price) * item.quantity)}</div>
               </div>
             ))}
           </div>
