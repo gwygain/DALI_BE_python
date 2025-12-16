@@ -18,6 +18,7 @@ class PaymentStatus(str, enum.Enum):
     PENDING = "PENDING"
     PAID = "PAID"
     CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
 
 
 class ShippingStatus(str, enum.Enum):

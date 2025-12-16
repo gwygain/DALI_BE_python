@@ -1492,6 +1492,7 @@ body {
 .text-success { color: #28a745; }
 .text-warning { color: #ffc107; }
 .text-danger { color: #dc3545; }
+.text-info { color: #3b82f6; }
 
 .summary-details .summary-line {
     display: flex;

@@ -13,6 +13,7 @@ class PaymentStatusEnum(str, Enum):
     PENDING = "PENDING"
     PAID = "PAID"
     CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
 
 
 class ShippingStatusEnum(str, Enum):

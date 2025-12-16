@@ -241,6 +241,10 @@
   color: #ef4444;
 }
 
+.payment-status.refunded {
+  color: #3b82f6;
+}
+
 .summary-row {
   display: flex;
   justify-content: space-between;

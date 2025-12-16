@@ -73,6 +73,7 @@ const OrderDetail = () => {
       PENDING: 'text-warning',
       FAILED: 'text-danger',
       CANCELLED: 'text-danger',
+      REFUNDED: 'text-info',
     };
     return statusMap[status] || 'text-warning';
   };

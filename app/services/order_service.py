@@ -46,14 +46,22 @@ class OrderService:
         shipping_fee = checkout_details.get("shippingFee", 0.0)
         total = subtotal + shipping_fee
         
+        # Determine payment status based on payment method
+        payment_method = checkout_details.get("paymentMethod")
+        # COD orders are PENDING until delivered; Maya/Card are PAID immediately (demo mode)
+        if payment_method and "COD" in payment_method.upper():
+            initial_payment_status = PaymentStatus.PENDING
+        else:
+            initial_payment_status = PaymentStatus.PAID
+        
         # Create order
         order = Order(
             account_id=user.account_id,
             address_id=address_id,
-            payment_status=PaymentStatus.PAID,  # For COD, mark as PAID immediately
+            payment_status=initial_payment_status,
             shipping_status=ShippingStatus.PROCESSING,
             delivery_method=checkout_details.get("deliveryMethod"),
-            payment_method=checkout_details.get("paymentMethod"),
+            payment_method=payment_method,
             total_price=total
         )
         
@@ -244,13 +252,17 @@ class OrderService:
         
         # Update order
         order.shipping_status = ShippingStatus.CANCELLED
-        order.payment_status = PaymentStatus.CANCELLED
+        # If already paid (Maya/Card), set to REFUNDED; otherwise CANCELLED
+        if order.payment_status == PaymentStatus.PAID:
+            order.payment_status = PaymentStatus.REFUNDED
+        else:
+            order.payment_status = PaymentStatus.CANCELLED
         order.updated_at = datetime.utcnow()
         
         history = OrderHistory(
             order_id=order.order_id,
             status="CANCELLED",
-            notes="Order cancelled by customer"
+            notes="Order cancelled by customer" + (" - Payment refunded" if order.payment_status == PaymentStatus.REFUNDED else "")
         )
         db.add(history)
         
@@ -273,7 +285,11 @@ class OrderService:
         
         # If cancelled, also update payment status
         if status == ShippingStatus.CANCELLED:
-            order.payment_status = PaymentStatus.CANCELLED
+            # If already paid (Maya/Card), set to REFUNDED; otherwise CANCELLED
+            if order.payment_status == PaymentStatus.PAID:
+                order.payment_status = PaymentStatus.REFUNDED
+            else:
+                order.payment_status = PaymentStatus.CANCELLED
             
             # Restore product quantities
             for item in order.order_items:
