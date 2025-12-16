@@ -16,9 +16,9 @@ const AdminProductDetail = () => {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        const response = await productService.getProduct(id);
-        setProduct(response.product);
-        setNewStock(response.product.product_quantity);
+        const product = await productService.getProduct(id);
+        setProduct(product);
+        setNewStock(product.product_quantity);
       } catch (err) {
         setError('Failed to load product');
         console.error('Error loading product:', err);
@@ -36,12 +36,13 @@ const AdminProductDetail = () => {
     setSuccess('');
 
     try {
-      const updatedProduct = await productService.updateStock(id, newStock);
-      setProduct(updatedProduct);
+      await productService.updateStock(id, newStock);
+      // Update the local product state with new quantity
+      setProduct(prev => ({ ...prev, product_quantity: newStock }));
       setSuccess('Stock updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update stock');
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to update stock');
     } finally {
       setUpdating(false);
     }

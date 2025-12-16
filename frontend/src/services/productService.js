@@ -25,6 +25,15 @@ const productService = {
     return response.data;
   },
 
+  // Search products with query and category filter
+  searchProducts: async (query = '', category = '') => {
+    const params = {};
+    if (query) params.search = query;
+    if (category) params.category = category;
+    const response = await api.get('/products', { params });
+    return response.data;
+  },
+
   // Admin: Get inventory
   getInventory: async (params = {}) => {
     const response = await api.get('/admin/inventory', { params });

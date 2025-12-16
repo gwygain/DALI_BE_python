@@ -504,7 +504,14 @@ body {
     color: #333;
 }
 .product-card-actions {
-    padding: 0 20px 20px;
+    padding: 10px 15px 15px;
+    margin-top: auto;
+}
+
+.product-stock-level {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 8px;
 }
 
 .product-card-quantity-form {
@@ -1968,12 +1975,16 @@ body {
     /* Add transitions */
     transition: all 0.3s ease;
     transform: translateY(0);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
 }
 
 .product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 25px rgba(0,0,0,0.1);
     border-color: #ddd;
+    z-index: 1;
 }
 
 /* =================================

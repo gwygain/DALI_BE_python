@@ -85,6 +85,27 @@ class CartService:
         if not product:
             raise ValueError("Product not found")
         
+        # Get current quantity in cart
+        current_cart_qty = 0
+        if user:
+            existing_item = db.query(CartItem).filter(
+                CartItem.account_id == user.account_id,
+                CartItem.product_id == product_id
+            ).first()
+            if existing_item:
+                current_cart_qty = existing_item.quantity
+        else:
+            session_cart = CartService.get_session_cart(request)
+            current_cart_qty = session_cart.get(str(product_id), 0)
+        
+        # Check if total quantity would exceed available stock
+        total_requested = current_cart_qty + quantity
+        if total_requested > product.product_quantity:
+            available = product.product_quantity - current_cart_qty
+            if available <= 0:
+                raise ValueError(f"Sorry, no more stock available. You already have {current_cart_qty} in your cart.")
+            raise ValueError(f"Only {available} more available. You have {current_cart_qty} in cart, stock is {product.product_quantity}.")
+        
         if user:
             # Authenticated user - add to database
             existing_item = db.query(CartItem).filter(
@@ -126,6 +147,11 @@ class CartService:
         """Update quantity of item in cart."""
         if quantity < 1:
             raise ValueError("Quantity must be at least 1")
+        
+        # Check stock availability
+        product = db.query(Product).filter(Product.product_id == product_id).first()
+        if product and quantity > product.product_quantity:
+            raise ValueError(f"Only {product.product_quantity} available in stock.")
         
         if user:
             # Authenticated user - update database

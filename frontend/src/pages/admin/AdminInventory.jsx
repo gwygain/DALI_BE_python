@@ -6,10 +6,17 @@ const AdminInventory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(searchParams.get('query') || '');
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get('category') || ''
+  );
+  const [selectedSubcategory, setSelectedSubcategory] = useState(
+    searchParams.get('subcategory') || ''
+  );
+  const [stockFilter, setStockFilter] = useState(
+    searchParams.get('stock') || ''
   );
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -19,7 +26,8 @@ const AdminInventory = () => {
     const loadCategories = async () => {
       try {
         const data = await productService.getCategories();
-        setCategories(data);
+        // Backend returns { categories: [...] }
+        setCategories(data.categories || data || []);
       } catch (error) {
         console.error('Error loading categories:', error);
       }
@@ -27,18 +35,58 @@ const AdminInventory = () => {
     loadCategories();
   }, []);
 
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    const loadSubcategories = async () => {
+      if (selectedCategory) {
+        try {
+          const data = await productService.getSubcategories(selectedCategory);
+          setSubcategories(data.subcategories || data || []);
+        } catch (error) {
+          console.error('Error loading subcategories:', error);
+          setSubcategories([]);
+        }
+      } else {
+        setSubcategories([]);
+      }
+    };
+    loadSubcategories();
+  }, [selectedCategory]);
+
   // Fetch products
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setErrorMessage('');
     try {
-      const response = await productService.searchProducts(query, selectedCategory);
-      setProducts(response.products || []);
+      const params = {};
+      if (query) params.search = query;
+      if (selectedCategory) params.category = selectedCategory;
+      if (selectedSubcategory) params.subcategory = selectedSubcategory;
+      
+      const response = await productService.getProducts(params);
+      console.log('Products response:', response);
+      // Backend returns array directly, or object with products property
+      let productList = Array.isArray(response) ? response : (response.products || []);
+      
+      // Apply stock level filter
+      if (stockFilter === 'out') {
+        productList = productList.filter(p => p.product_quantity === 0);
+      } else if (stockFilter === 'low') {
+        productList = productList.filter(p => p.product_quantity > 0 && p.product_quantity <= 10);
+      }
+      
+      console.log('Product list:', productList);
+      setProducts(productList);
+      if (productList.length === 0) {
+        setErrorMessage('No products found');
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setErrorMessage('Failed to load products: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
-  }, [query, selectedCategory]);
+  }, [query, selectedCategory, selectedSubcategory, stockFilter]);
 
   useEffect(() => {
     const timeoutId = setTimeout(fetchProducts, 200);
@@ -50,8 +98,16 @@ const AdminInventory = () => {
     const params = new URLSearchParams();
     if (query) params.set('query', query);
     if (selectedCategory) params.set('category', selectedCategory);
+    if (selectedSubcategory) params.set('subcategory', selectedSubcategory);
+    if (stockFilter) params.set('stock', stockFilter);
     setSearchParams(params);
-  }, [query, selectedCategory, setSearchParams]);
+  }, [query, selectedCategory, selectedSubcategory, stockFilter, setSearchParams]);
+
+  // Handle category change - reset subcategory
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory('');
+  };
 
   const formatPrice = (price) => {
     return `₱${price.toLocaleString('en-PH', {
@@ -74,24 +130,83 @@ const AdminInventory = () => {
                 name="category"
                 value=""
                 id="cat-all"
-                checked={selectedCategory === ''}
-                onChange={() => setSelectedCategory('')}
+                checked={selectedCategory === '' && selectedSubcategory === ''}
+                onChange={() => handleCategoryChange('')}
               />
               <label htmlFor="cat-all">All</label>
             </li>
             {categories.map((cat, index) => (
-              <li key={cat}>
+              <li key={cat} className="category-item">
                 <input
                   type="radio"
                   name="category"
                   value={cat}
                   id={`cat-${index}`}
-                  checked={selectedCategory === cat}
-                  onChange={() => setSelectedCategory(cat)}
+                  checked={selectedCategory === cat && selectedSubcategory === ''}
+                  onChange={() => handleCategoryChange(cat)}
                 />
                 <label htmlFor={`cat-${index}`}>{cat}</label>
+                
+                {/* Subcategories nested under selected category */}
+                {selectedCategory === cat && subcategories.length > 0 && (
+                  <ul className="subcategory-list" style={{ marginLeft: '20px', marginTop: '8px' }}>
+                    {subcategories.map((subcat, subIndex) => (
+                      <li key={subcat}>
+                        <input
+                          type="radio"
+                          name="subcategory"
+                          value={subcat}
+                          id={`subcat-${subIndex}`}
+                          checked={selectedSubcategory === subcat}
+                          onChange={() => setSelectedSubcategory(subcat)}
+                        />
+                        <label htmlFor={`subcat-${subIndex}`}>{subcat}</label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
+          </ul>
+        </div>
+
+        {/* Stock Level Filter */}
+        <div className="filter-group" style={{ marginTop: '20px' }}>
+          <h5>STOCK LEVEL</h5>
+          <ul>
+            <li>
+              <input
+                type="radio"
+                name="stockFilter"
+                value=""
+                id="stock-all"
+                checked={stockFilter === ''}
+                onChange={() => setStockFilter('')}
+              />
+              <label htmlFor="stock-all">All</label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                name="stockFilter"
+                value="low"
+                id="stock-low"
+                checked={stockFilter === 'low'}
+                onChange={() => setStockFilter('low')}
+              />
+              <label htmlFor="stock-low" style={{ color: '#856404' }}>Low Stock (≤10)</label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                name="stockFilter"
+                value="out"
+                id="stock-out"
+                checked={stockFilter === 'out'}
+                onChange={() => setStockFilter('out')}
+              />
+              <label htmlFor="stock-out" style={{ color: '#dc3545' }}>Out of Stock</label>
+            </li>
           </ul>
         </div>
       </aside>
@@ -140,13 +255,37 @@ const AdminInventory = () => {
                     </div>
                   </Link>
                   <div className="product-card-actions">
-                    <div className="product-stock-level">
-                      Stock: {product.product_quantity}
+                    <div className="product-stock-level" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span>Stock: {product.product_quantity}</span>
+                      {product.product_quantity === 0 && (
+                        <span style={{
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600'
+                        }}>
+                          Out of Stock
+                        </span>
+                      )}
+                      {product.product_quantity > 0 && product.product_quantity <= 10 && (
+                        <span style={{
+                          backgroundColor: '#ffc107',
+                          color: '#212529',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600'
+                        }}>
+                          Low Stock
+                        </span>
+                      )}
                     </div>
                     <Link
                       to={`/admin/inventory/${product.product_id}`}
-                      className="btn btn-primary"
-                      style={{ width: '100%', textAlign: 'center' }}
+                      className="btn btn-primary btn-small"
+                      style={{ width: '90%', textAlign: 'center', padding: '8px 15px', fontSize: '0.9rem' }}
                     >
                       Manage Stock
                     </Link>

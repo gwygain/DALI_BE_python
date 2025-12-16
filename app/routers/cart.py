@@ -25,6 +25,7 @@ class CartItemResponse(BaseModel):
     quantity: int
     subtotal: float
     image: str = None
+    available_stock: int = 0
 
 
 class CartResponse(BaseModel):
@@ -53,7 +54,8 @@ async def get_cart(
             product_price=float(product.product_price),
             quantity=quantity,
             subtotal=float(product.product_price) * quantity,
-            image=product.image
+            image=product.image,
+            available_stock=product.product_quantity
         ))
     
     return CartResponse(

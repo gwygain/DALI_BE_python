@@ -25,6 +25,7 @@ class UpdateStockRequest(BaseModel):
 
 class UpdateStatusRequest(BaseModel):
     status: ShippingStatus
+    notes: str = None
 
 
 @router.post("/login", response_model=AdminLoginResponse)
@@ -159,7 +160,7 @@ async def update_order_status(
     """Update order shipping status."""
     from app.services.order_service import OrderService
     try:
-        OrderService.update_shipping_status(db, order_id, status_data.status)
+        OrderService.update_shipping_status(db, order_id, status_data.status, status_data.notes)
         return {"message": "Status updated", "order_id": order_id, "status": status_data.status.value}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

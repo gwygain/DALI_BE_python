@@ -220,8 +220,11 @@ const AdminOrderDetail = () => {
                     style={{ maxWidth: '200px' }}
                   >
                     <option value="PROCESSING">Processing</option>
-                    <option value="SHIPPED">Shipped</option>
+                    <option value="PREPARING_FOR_SHIPMENT">Preparing for Shipment</option>
+                    <option value="IN_TRANSIT">In Transit</option>
                     <option value="DELIVERED">Delivered</option>
+                    <option value="COLLECTED">Collected (Pickup)</option>
+                    <option value="DELIVERY_FAILED">Delivery Failed</option>
                     <option value="CANCELLED">Cancelled</option>
                   </select>
                   <input

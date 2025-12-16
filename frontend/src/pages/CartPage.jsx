@@ -10,12 +10,20 @@ const CartPage = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const handleQuantityChange = async (productId, newQuantity) => {
+  const handleQuantityChange = async (productId, newQuantity, maxStock) => {
     if (newQuantity < 1) return;
+    if (newQuantity > maxStock) {
+      showToast(`Only ${maxStock} available in stock`, 'error');
+      return;
+    }
     try {
-      await updateQuantity(productId, newQuantity);
+      const result = await updateQuantity(productId, newQuantity);
+      if (!result.success) {
+        showToast(result.error || 'Failed to update quantity', 'error');
+      }
     } catch (error) {
       console.error('Error updating quantity:', error);
+      showToast('Failed to update quantity', 'error');
     }
   };
 
@@ -90,18 +98,34 @@ const CartPage = () => {
                       src={item.image ? `/images/products/${item.image}` : `/images/products/default.png`} 
                       alt={item.product_name}
                     />
-                    <span>{item.product_name}</span>
+                    <div>
+                      <span>{item.product_name}</span>
+                      {item.available_stock <= 10 && item.available_stock > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: '#856404', marginTop: '4px' }}>
+                          Only {item.available_stock} left in stock
+                        </div>
+                      )}
+                      {item.available_stock === 0 && (
+                        <div style={{ fontSize: '0.75rem', color: '#dc3545', marginTop: '4px' }}>
+                          Out of stock
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="item-price">₱{item.product_price.toFixed(2)}</div>
                   <div className="item-quantity">
                     <button 
-                      onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                      onClick={() => handleQuantityChange(item.product_id, item.quantity - 1, item.available_stock)}
                       disabled={item.quantity <= 1}
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}>
+                    <button 
+                      onClick={() => handleQuantityChange(item.product_id, item.quantity + 1, item.available_stock)}
+                      disabled={item.quantity >= item.available_stock}
+                      title={item.quantity >= item.available_stock ? `Max ${item.available_stock} available` : ''}
+                    >
                       +
                     </button>
                   </div>

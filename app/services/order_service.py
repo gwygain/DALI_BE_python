@@ -260,7 +260,8 @@ class OrderService:
     def update_shipping_status(
         db: Session,
         order_id: int,
-        status: ShippingStatus
+        status: ShippingStatus,
+        notes: str = None
     ):
         """Update order shipping status (admin only)."""
         order = db.query(Order).filter(Order.order_id == order_id).first()
@@ -270,10 +271,13 @@ class OrderService:
         order.shipping_status = status
         order.updated_at = datetime.utcnow()
         
+        # Use custom notes if provided, otherwise generate default
+        history_notes = notes if notes else f"Status updated to {status.value}"
+        
         history = OrderHistory(
             order_id=order.order_id,
             status=status.value,
-            notes=f"Status updated to {status.value}"
+            notes=history_notes
         )
         db.add(history)
         
