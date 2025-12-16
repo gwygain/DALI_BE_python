@@ -158,18 +158,17 @@ async def process_payment(
             raise HTTPException(status_code=400, detail=str(e))
     
     elif payment_data.payment_method in ["Maya", "Credit/Debit Card"]:
+        # For demo purposes: auto-mark as paid without redirecting to payment gateway
         try:
-            order = OrderService.create_pending_order(db, request, current_user.email, checkout_details)
-            maya_response = await MayaService.create_checkout(order)
-            OrderService.set_payment_transaction_id(db, order.order_id, maya_response["checkoutId"])
+            order = OrderService.create_order(db, request, current_user.email, checkout_details)
+            request.session.pop("checkoutDetails", None)
             return {
                 "success": True,
                 "order_id": order.order_id,
-                "payment_url": maya_response["redirectUrl"],
-                "message": "Redirecting to payment gateway"
+                "message": "Payment successful! Order placed."
             }
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Payment gateway error: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Order creation error: {str(e)}")
     
     raise HTTPException(status_code=400, detail="Invalid payment method")
 

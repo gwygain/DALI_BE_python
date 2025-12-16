@@ -53,20 +53,26 @@ const LocationPicker = ({
   // Default center (Manila)
   const defaultCenter = [14.5995, 120.9842];
   
+  // Parse lat/lng to ensure they're numbers
+  const parsedLat = latitude ? parseFloat(latitude) : null;
+  const parsedLng = longitude ? parseFloat(longitude) : null;
+  
   const [position, setPosition] = useState(
-    latitude && longitude ? { lat: latitude, lng: longitude } : null
+    parsedLat && parsedLng ? { lat: parsedLat, lng: parsedLng } : null
   );
   const [mapCenter, setMapCenter] = useState(
-    latitude && longitude ? [latitude, longitude] : defaultCenter
+    parsedLat && parsedLng ? [parsedLat, parsedLng] : defaultCenter
   );
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
 
   // Update position when lat/lng props change
   useEffect(() => {
-    if (latitude && longitude) {
-      setPosition({ lat: latitude, lng: longitude });
-      setMapCenter([latitude, longitude]);
+    const lat = latitude ? parseFloat(latitude) : null;
+    const lng = longitude ? parseFloat(longitude) : null;
+    if (lat && lng) {
+      setPosition({ lat, lng });
+      setMapCenter([lat, lng]);
     }
   }, [latitude, longitude]);
 
@@ -214,7 +220,7 @@ const LocationPicker = ({
         <div className="location-picker-coords">
           <span className="location-confirmed">✓ Location pinned</span>
           <small>
-            ({position.lat.toFixed(6)}, {position.lng.toFixed(6)})
+            ({Number(position.lat).toFixed(6)}, {Number(position.lng).toFixed(6)})
           </small>
         </div>
       )}

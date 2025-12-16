@@ -73,42 +73,52 @@ const Profile = () => {
   };
 
   const handleAddressSubmit = async (addressData) => {
-    const newAddress = await addressService.createAddress(addressData);
-    // If new address is default, update other addresses
-    if (newAddress.is_default) {
-      setAddresses([...addresses.map(a => ({ ...a, is_default: false })), newAddress]);
-    } else {
-      setAddresses([...addresses, newAddress]);
+    try {
+      const newAddress = await addressService.createAddress(addressData);
+      // If new address is default, update other addresses
+      if (newAddress.is_default) {
+        setAddresses([...addresses.map(a => ({ ...a, is_default: false })), newAddress]);
+      } else {
+        setAddresses([...addresses, newAddress]);
+      }
+      setAddingAddress(false);
+      setSuccessMessage('Address added successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.detail || 'Failed to add address');
+      setTimeout(() => setErrorMessage(''), 3000);
     }
-    setAddingAddress(false);
-    setSuccessMessage('Address added successfully!');
-    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleAddressUpdate = async (addressData) => {
-    const updatedAddress = await addressService.updateAddress(
-      editingAddress.address_id,
-      addressData
-    );
-    // If updated address is now default, update other addresses
-    if (updatedAddress.is_default) {
-      setAddresses(
-        addresses.map((a) =>
-          a.address_id === editingAddress.address_id 
-            ? updatedAddress 
-            : { ...a, is_default: false }
-        )
+    try {
+      const updatedAddress = await addressService.updateAddress(
+        editingAddress.address_id,
+        addressData
       );
-    } else {
-      setAddresses(
-        addresses.map((a) =>
-          a.address_id === editingAddress.address_id ? updatedAddress : a
-        )
-      );
+      // If updated address is now default, update other addresses
+      if (updatedAddress.is_default) {
+        setAddresses(
+          addresses.map((a) =>
+            a.address_id === editingAddress.address_id 
+              ? updatedAddress 
+              : { ...a, is_default: false }
+          )
+        );
+      } else {
+        setAddresses(
+          addresses.map((a) =>
+            a.address_id === editingAddress.address_id ? updatedAddress : a
+          )
+        );
+      }
+      setEditingAddress(null);
+      setSuccessMessage('Address updated successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.detail || 'Failed to update address');
+      setTimeout(() => setErrorMessage(''), 3000);
     }
-    setEditingAddress(null);
-    setSuccessMessage('Address updated successfully!');
-    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleDeleteAddress = async (addressId) => {
