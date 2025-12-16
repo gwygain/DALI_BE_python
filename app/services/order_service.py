@@ -271,6 +271,16 @@ class OrderService:
         order.shipping_status = status
         order.updated_at = datetime.utcnow()
         
+        # If cancelled, also update payment status
+        if status == ShippingStatus.CANCELLED:
+            order.payment_status = PaymentStatus.CANCELLED
+            
+            # Restore product quantities
+            for item in order.order_items:
+                product = db.query(Product).filter(Product.product_id == item.product_id).first()
+                if product:
+                    product.product_quantity += item.quantity
+        
         # Use custom notes if provided, otherwise generate default
         history_notes = notes if notes else f"Status updated to {status.value}"
         
