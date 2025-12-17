@@ -119,13 +119,16 @@ const AdminAudit = () => {
         } catch { 
             detailsStr = String(a.details || ''); 
         }
-        
-        const hay = `${a.actor_email || ''} ${a.entity_type || ''} ${a.entity_id || ''} ${detailsStr}`.toLowerCase();
+        // include resolved product name (from details or cached productNames) in the search haystack
+        let detailsObj = {};
+        try { detailsObj = a.details ? (typeof a.details === 'string' ? JSON.parse(a.details) : a.details) : {}; } catch { detailsObj = {}; }
+        const resolvedProductName = detailsObj.product_name || detailsObj.product_title || detailsObj.name || detailsObj.title || productNames[a.entity_id] || '';
+        const hay = `${a.actor_email || ''} ${a.entity_type || ''} ${a.entity_id || ''} ${resolvedProductName} ${detailsStr}`.toLowerCase();
         if (!hay.includes(s)) return false;
       }
       return true;
     }).sort((x,y)=> new Date(y.created_at) - new Date(x.created_at));
-  }, [audits, q, eventFilter, range]);
+  }, [audits, q, eventFilter, range, productNames]);
 
   return (
     <div className="container admin-audit-page">
