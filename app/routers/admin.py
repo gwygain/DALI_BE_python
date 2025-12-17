@@ -209,9 +209,14 @@ async def update_stock(
     product = db.query(Product).filter(Product.product_id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
     old_qty = product.product_quantity
-    product.product_quantity = stock_data.quantity
+    new_qty = int(stock_data.quantity)
+
+    # If there's no change, skip DB write and audit
+    if old_qty == new_qty:
+        return {"message": "No change", "product_id": product_id, "quantity": old_qty}
+
+    product.product_quantity = new_qty
     db.commit()
 
     # Audit log entry (include actor name when available)
@@ -219,7 +224,7 @@ async def update_stock(
         actor_email = getattr(admin, 'account_email', None) or getattr(admin, 'email', None) or 'unknown'
         actor = db.query(Account).filter(Account.account_email == actor_email).first()
         actor_name = actor.full_name if actor else None
-        audit_details = {'old_quantity': old_qty, 'new_quantity': stock_data.quantity}
+        audit_details = {'old_quantity': old_qty, 'new_quantity': new_qty}
         if actor_name:
             audit_details['actor_name'] = actor_name
         audit = AuditLog(
@@ -234,7 +239,7 @@ async def update_stock(
     except Exception:
         db.rollback()
 
-    return {"message": "Stock updated", "product_id": product_id, "quantity": stock_data.quantity}
+    return {"message": "Stock updated", "product_id": product_id, "quantity": new_qty}
 
 
 @router.put("/products/{product_id}/price")
@@ -252,9 +257,19 @@ async def update_price(
     product = db.query(Product).filter(Product.product_id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    # Normalize to two decimals for comparison
+    try:
+        old_price = round(float(product.product_price), 2)
+    except Exception:
+        old_price = float(product.product_price) if product.product_price is not None else 0.0
 
-    old_price = float(product.product_price)
-    product.product_price = price_data.price
+    new_price = round(float(price_data.price), 2)
+
+    # If price unchanged, skip audit and DB write
+    if old_price == new_price:
+        return {"message": "No change", "product_id": product_id, "price": old_price}
+
+    product.product_price = new_price
     db.commit()
 
     # Audit log entry (include actor name when available)

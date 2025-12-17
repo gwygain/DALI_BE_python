@@ -195,13 +195,14 @@ const AdminProductDetail = () => {
           {isSuperAdmin && (
             <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
               <button
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={() => setIsPriceModalOpen(true)}
+                style={{ padding: '8px 12px' }}
               >
                 Edit Price
               </button>
               <button
-                className="btn btn-outline"
+                className="btn btn-secondary"
                 onClick={() => setIsEditOpen((s) => !s)}
               >
                 {isEditOpen ? 'Cancel Edit' : 'Edit Product'}
