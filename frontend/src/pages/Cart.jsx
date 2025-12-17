@@ -7,7 +7,10 @@ const Cart = () => {
   const { showToast } = useToast();
 
   const formatPrice = (price) => {
-    return `₱${price.toLocaleString('en-PH', {
+    if (price === null || price === undefined || price === '') return '—';
+    const n = Number(price);
+    if (Number.isNaN(n)) return String(price);
+    return `₱${n.toLocaleString('en-PH', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -65,7 +68,7 @@ const Cart = () => {
                   />
                   <div>
                     <p className="product-name">{item.product_name}</p>
-                    <p className="product-price">{formatPrice(item.product_price)}</p>
+                    <p className="product-price">{item.product_price ? formatPrice(item.product_price) : '—'}</p>
                   </div>
                 </div>
 
@@ -82,7 +85,7 @@ const Cart = () => {
                 </div>
 
                 <div className="cart-item-total">
-                  {formatPrice(item.subtotal)}
+                  {formatPrice(item.subtotal ?? (Number(item.product_price || 0) * Number(item.quantity || 0)))}
                 </div>
 
                 <div className="cart-item-remove">

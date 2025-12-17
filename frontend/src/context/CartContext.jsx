@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { cartService } from '../services';
+import { cartService, productService } from '../services';
 import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
@@ -22,19 +22,100 @@ export const CartProvider = ({ children }) => {
   // Calculate cart count from items
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Helper: guest cart stored in localStorage when not authenticated
+  const GUEST_KEY = 'guest_cart';
+
+  const readGuestCart = () => {
+    try {
+      const raw = localStorage.getItem(GUEST_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const writeGuestCart = (items) => {
+    try {
+      localStorage.setItem(GUEST_KEY, JSON.stringify(items || []));
+    } catch (e) {
+      // ignore
+    }
+  };
+
   // Fetch cart on mount and when auth changes
   useEffect(() => {
     fetchCart();
   }, [isAuthenticated]);
 
+  // When a user becomes authenticated, merge any guest cart into server cart
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const guest = readGuestCart();
+    if (!guest || guest.length === 0) return;
+    mergeGuestCart().catch(e => console.error('mergeGuestCart error', e));
+  }, [isAuthenticated]);
+
+  // Merge guest cart into server cart; callable by UI to wait for completion
+  const mergeGuestCart = async () => {
+    const guest = readGuestCart();
+    if (!guest || guest.length === 0) return;
+    try {
+      for (const it of guest) {
+        await cartService.addToCart(it.product_id, it.quantity);
+      }
+    } finally {
+      writeGuestCart([]);
+      await fetchCart();
+    }
+  };
+
   const fetchCart = async () => {
     try {
       setLoading(true);
       // Backend returns: { items: [], subtotal: number, total: number }
-      const response = await cartService.getCart();
-      setCartItems(response.items || []);
-      setSubtotal(response.subtotal || 0);
-      setTotal(response.total || 0);
+      if (!isAuthenticated) {
+        // show guest cart from localStorage when not authenticated
+        let guest = readGuestCart();
+        if (!guest) guest = [];
+        // Ensure guest items have product metadata (name, image, price)
+        const needsFetch = guest.filter(it => !it.product_name || !it.product_price || !it.image).map(it => it.product_id);
+        if (needsFetch.length > 0) {
+          try {
+            // fetch details for each missing id (sequential to avoid rate limits)
+            for (const id of needsFetch) {
+              try {
+                const p = await productService.getProduct(id);
+                const idx = guest.findIndex(x => x.product_id === id);
+                if (idx >= 0) {
+                  guest[idx] = {
+                    ...guest[idx],
+                    product_name: p.product_name || p.name || p.title || guest[idx].product_name,
+                    image: p.image || guest[idx].image,
+                    product_price: p.product_price || p.price || guest[idx].product_price,
+                  };
+                }
+              } catch (e) {
+                // ignore product fetch errors for individual items
+              }
+            }
+            // persist enhanced guest cart
+            writeGuestCart(guest);
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        // compute subtotal from available metadata
+        const subtotalCalc = (guest || []).reduce((s, it) => s + (Number(it.product_price || it.price || 0) * Number(it.quantity || 0)), 0);
+        setCartItems(guest || []);
+        setSubtotal(subtotalCalc);
+        setTotal(subtotalCalc);
+      } else {
+        const response = await cartService.getCart();
+        setCartItems(response.items || []);
+        setSubtotal(response.subtotal || 0);
+        setTotal(response.total || 0);
+      }
     } catch (error) {
       console.error('Error fetching cart:', error);
       // Reset cart on error
@@ -49,6 +130,41 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (productId, quantity = 1) => {
     try {
       setLoading(true);
+      if (!isAuthenticated) {
+        // add to guest cart in localStorage
+        const guest = readGuestCart();
+        const existing = guest.find(i => i.product_id === productId);
+        if (existing) {
+          existing.quantity = (existing.quantity || 0) + quantity;
+        } else {
+          // price may be unknown here; allow caller to pass price in later fetch
+          guest.push({ product_id: productId, quantity });
+        }
+        // try to enrich the newly added item with product metadata so UI updates immediately
+        try {
+          const targetId = productId;
+          const prod = await productService.getProduct(targetId);
+          const idx = guest.findIndex(i => i.product_id === targetId);
+          if (idx >= 0) {
+            guest[idx] = {
+              ...guest[idx],
+              product_name: prod.product_name || prod.name || prod.title,
+              image: prod.image || prod.product_image || prod.picture,
+              product_price: prod.product_price || prod.price || prod.list_price,
+            };
+          }
+        } catch (e) {
+          // ignore metadata fetch failures; cart will be enriched on next fetch
+        }
+
+        writeGuestCart(guest);
+        setCartItems(guest);
+        const subtotalCalc = guest.reduce((s, it) => s + (Number(it.product_price || it.price || 0) * Number(it.quantity || 0)), 0);
+        setSubtotal(subtotalCalc);
+        setTotal(subtotalCalc);
+        return { success: true, guest: true };
+      }
+
       // Backend returns { message: "Item added to cart" }
       await cartService.addToCart(productId, quantity);
       // Refetch cart to get updated data
@@ -68,6 +184,21 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (productId, quantity) => {
     try {
       setLoading(true);
+      if (!isAuthenticated) {
+        const guest = readGuestCart() || [];
+        const idx = guest.findIndex(i => i.product_id === productId);
+        if (idx >= 0) {
+          guest[idx].quantity = quantity;
+          writeGuestCart(guest);
+          setCartItems(guest);
+          const subtotalCalc = guest.reduce((s, it) => s + (Number(it.product_price || it.price || 0) * Number(it.quantity || 0)), 0);
+          setSubtotal(subtotalCalc);
+          setTotal(subtotalCalc);
+          return { success: true };
+        }
+        return { success: false, error: 'Item not found in cart' };
+      }
+
       // Backend returns { message: "Cart updated" }
       await cartService.updateCartItem(productId, quantity);
       // Refetch cart to get updated data
@@ -86,6 +217,18 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = async (productId) => {
     try {
+      setLoading(true);
+      if (!isAuthenticated) {
+        const guest = readGuestCart() || [];
+        const updated = guest.filter(i => i.product_id !== productId);
+        writeGuestCart(updated);
+        setCartItems(updated);
+        const subtotalCalc = updated.reduce((s, it) => s + (Number(it.product_price || it.price || 0) * Number(it.quantity || 0)), 0);
+        setSubtotal(subtotalCalc);
+        setTotal(subtotalCalc);
+        return { success: true };
+      }
+
       setLoading(true);
       // Backend returns { message: "Item removed from cart" }
       await cartService.removeFromCart(productId);
@@ -106,6 +249,14 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       setLoading(true);
+      if (!isAuthenticated) {
+        writeGuestCart([]);
+        setCartItems([]);
+        setSubtotal(0);
+        setTotal(0);
+        return { success: true };
+      }
+
       await cartService.clearCart();
       setCartItems([]);
       setSubtotal(0);
@@ -129,6 +280,7 @@ export const CartProvider = ({ children }) => {
     total,
     loading,
     fetchCart,
+    mergeGuestCart,
     addToCart,
     updateQuantity,
     removeFromCart,
