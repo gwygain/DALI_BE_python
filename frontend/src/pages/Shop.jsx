@@ -23,8 +23,8 @@ const Shop = () => {
     const loadCategories = async () => {
       try {
         const data = await productService.getCategories();
-        // Backend returns { categories: [...] }
-        setCategories(data.categories || []);
+        // Adjust based on API structure (handling both array and object responses)
+        setCategories(data.categories || data || []);
       } catch (error) {
         console.error('Error loading categories:', error);
       }
@@ -34,23 +34,22 @@ const Shop = () => {
 
   // Fetch subcategories when category changes
   useEffect(() => {
-    if (selectedCategory) {
-      const loadSubcategories = async () => {
+    const loadSubcategories = async () => {
+      if (selectedCategory) {
         try {
           const data = await productService.getSubcategories(selectedCategory);
-          // Backend returns { subcategories: [...] }
-          setSubcategories(data.subcategories || []);
+          setSubcategories(data.subcategories || data || []);
         } catch (error) {
           console.error('Error loading subcategories:', error);
+          setSubcategories([]);
         }
-      };
-      loadSubcategories();
-    } else {
-      setSubcategories([]);
-    }
+      } else {
+        setSubcategories([]);
+      }
+    };
+    loadSubcategories();
   }, [selectedCategory]);
 
-  // Fetch products
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -60,8 +59,7 @@ const Shop = () => {
       if (selectedSubcategory) params.subcategory = selectedSubcategory;
       
       const response = await productService.getProducts(params);
-      // Backend returns array of products directly
-      setProducts(Array.isArray(response) ? response : []);
+      setProducts(Array.isArray(response) ? response : (response.products || []));
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
@@ -75,7 +73,6 @@ const Shop = () => {
     return () => clearTimeout(timeoutId);
   }, [fetchProducts]);
 
-  // Update URL params
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set('query', query);
@@ -85,7 +82,7 @@ const Shop = () => {
   }, [query, selectedCategory, selectedSubcategory, setSearchParams]);
 
   const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
+    setSelectedCategory(category === selectedCategory ? '' : category);
     setSelectedSubcategory('');
   };
 
@@ -96,81 +93,92 @@ const Shop = () => {
   };
 
   return (
-    <div className="shop-container container">
-      {/* Filter Sidebar */}
-      <aside className="filter-sidebar">
-        <h4>Filters</h4>
-        <div className="filter-group">
-          <h5>CATEGORY</h5>
-          <button
+    <div className="shop-layout" style={{ display: 'flex', padding: '20px 5%', gap: '30px', fontFamily: 'Arial, sans-serif' }}>
+      {/* Filter Sidebar (Styled like Admin Inventory) */}
+      <aside style={{ width: '250px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '600', margin: 0, color: '#333' }}>Filters</h2>
+          <button 
             onClick={handleReset}
-            className="reset-link"
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#b21984',
-              textDecoration: 'none',
-              display: 'block',
-              marginBottom: '15px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: 0,
-              textAlign: 'left',
+              padding: '5px 15px',
+              borderRadius: '20px',
+              border: '1px solid #ccc',
+              backgroundColor: 'white',
+              fontSize: '12px',
+              color: '#888',
+              cursor: 'pointer'
             }}
           >
-            All Categories
+            Clear filter
           </button>
+        </div>
 
-          <ul id="category-list">
-            {categories.map((cat) => (
-              <li key={cat} className="category-item">
-                <input
-                  type="radio"
-                  name="category"
-                  value={cat}
-                  id={`cat-${cat}`}
-                  checked={selectedCategory === cat}
-                  onChange={() => handleCategoryChange(cat)}
-                  style={{ display: 'none' }}
-                />
-                <label
-                  htmlFor={`cat-${cat}`}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '10px 5px',
-                    fontWeight: selectedCategory === cat ? 700 : 600,
-                    cursor: 'pointer',
-                    position: 'relative',
-                    borderBottom: '1px solid #f0f0f0',
-                    color: selectedCategory === cat ? '#b21984' : 'inherit',
-                  }}
-                >
-                  {cat}
-                </label>
-                {/* Subcategories */}
-                {selectedCategory === cat && subcategories.length > 0 && (
-                  <div
-                    className="subcategory-container"
-                    style={{ backgroundColor: '#fafafa', padding: '5px 0 10px 25px' }}
+        <div className="filter-group" style={{ marginBottom: '25px' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 'bold', color: '#888', marginBottom: '15px', letterSpacing: '1px' }}>
+            CATEGORY
+          </h3>
+          
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {/* All Categories Option */}
+            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                id="cat-all"
+                checked={selectedCategory === ''}
+                onChange={() => handleCategoryChange('')}
+                style={{ width: '18px', height: '18px', marginRight: '10px', accentColor: '#b21984' }}
+              />
+              <label htmlFor="cat-all" style={{ fontSize: '14px', color: '#444', cursor: 'pointer' }}>
+                All Categories
+              </label>
+            </li>
+
+            {/* Nested Categories List */}
+            {categories.map((cat, index) => (
+              <li key={cat} style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="checkbox"
+                    id={`cat-${index}`}
+                    checked={selectedCategory === cat}
+                    onChange={() => handleCategoryChange(cat)}
+                    style={{ width: '18px', height: '18px', marginRight: '10px', accentColor: '#b21984' }}
+                  />
+                  <label 
+                    htmlFor={`cat-${index}`} 
+                    style={{ 
+                      fontSize: '14px', 
+                      color: selectedCategory === cat ? '#b21984' : '#444', 
+                      fontWeight: selectedCategory === cat ? 'bold' : 'normal', 
+                      cursor: 'pointer' 
+                    }}
                   >
-                    <ul className="subcategory-list" style={{ listStyle: 'none', padding: 0 }}>
-                      {subcategories.map((subcat) => (
-                        <li key={subcat} style={{ padding: '5px 0' }}>
-                          <input
-                            type="radio"
-                            name="subcategory"
-                            value={subcat}
-                            id={`subcat-${subcat}`}
-                            checked={selectedSubcategory === subcat}
-                            onChange={() => setSelectedSubcategory(subcat)}
-                            style={{ marginRight: '8px' }}
-                          />
-                          <label htmlFor={`subcat-${subcat}`}>{subcat}</label>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                    {cat}
+                  </label>
+                </div>
+                
+                {/* Nested Subcategories (Only visible if parent category is selected) */}
+                {selectedCategory === cat && subcategories.length > 0 && (
+                  <ul style={{ listStyle: 'none', padding: '10px 0 0 28px' }}>
+                    {subcategories.map((subcat, subIndex) => (
+                      <li key={subcat} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
+                         <input
+                          type="checkbox"
+                          id={`subcat-${subIndex}`}
+                          checked={selectedSubcategory === subcat}
+                          onChange={() => setSelectedSubcategory(subcat === selectedSubcategory ? '' : subcat)}
+                          style={{ width: '16px', height: '16px', marginRight: '10px', accentColor: '#b21984' }}
+                        />
+                        <label 
+                          htmlFor={`subcat-${subIndex}`} 
+                          style={{ fontSize: '13px', color: selectedSubcategory === subcat ? '#b21984' : '#666', cursor: 'pointer' }}
+                        >
+                          {subcat}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </li>
             ))}
@@ -179,24 +187,63 @@ const Shop = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="product-grid-container">
-        <section className="search-banner">
-          <input
-            type="search"
-            id="search-input"
-            name="query"
-            className="main-search-input"
-            placeholder="Search products..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+      <main style={{ flexGrow: 1 }}>
+        <section style={{ 
+          backgroundColor: '#b21984', 
+          borderRadius: '10px', 
+          height: '180px', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          marginBottom: '30px'
+        }}>
+          <div style={{ position: 'relative', width: '70%' }}>
+            <span style={{ 
+              position: 'absolute', 
+              left: '15px', 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              color: '#888' 
+            }}>
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 12px 12px 45px',
+                borderRadius: '8px',
+                border: 'none',
+                fontSize: '16px',
+                outline: 'none'
+              }}
+            />
+          </div>
         </section>
 
-        {/* Product Grid Results */}
         <div id="product-grid-results">
-          {loading ? (
-            <p style={{ padding: '20px' }}>Loading products...</p>
-          ) : (
+           {loading ? (
+            <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>Loading products...</div>
+          ) : products.length === 0 ? (
+            /* Error Message placed here inside the grid area */
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '80px 20px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '10px',
+              border: '2px dashed #ddd',
+              color: '#721c24'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔍</div>
+              <h3 style={{ margin: 0 }}>No products found</h3>
+              <p style={{ color: '#888', marginTop: '10px' }}>Try adjusting your search or filters.</p>
+            </div>
+          ): (
             <ProductGrid products={products} availableQuantities={availableQuantities} />
           )}
         </div>

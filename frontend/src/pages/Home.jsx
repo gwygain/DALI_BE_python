@@ -1,7 +1,15 @@
 import { Link } from 'react-router-dom';
-import './Home.css'; // Make sure to create this file
+import './Home.css'; 
 
 const Home = () => {
+  const scrollToWhyChooseUs = (e) => {
+    e.preventDefault();
+    const section = document.getElementById('why-choose-us');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <>
       <section className="hero-section">
@@ -22,9 +30,12 @@ const Home = () => {
               <Link to="/shop" className="btn-primary">
                 Shop now
               </Link>
-              <Link to="/about" className="btn-secondary">
+              <a href="#why-choose-us" 
+                className="btn-secondary" 
+                onClick={scrollToWhyChooseUs}
+              >
                 Learn more
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -81,7 +92,7 @@ const Home = () => {
         <div className="card-content">
           <h3>Frozen Meat</h3>
           <p>Quality cuts, kept fresh and ready to cook.</p>
-          <Link to="/shop" className="see-more-btn">See more</Link>
+          <Link to="/shop?category=Frozen Goods" className="see-more-btn">See more</Link>
         </div>
         <div className="card-image-wrapper">
           <img src="/images/meat.png" alt="Frozen Meat" />
@@ -93,7 +104,7 @@ const Home = () => {
         <div className="card-content">
           <h3>Food Staples</h3>
           <p>Your everyday essentials for home meals.</p>
-          <Link to="/shop" className="see-more-btn">See more</Link>
+          <Link to="/shop?category=Canned Goods" className="see-more-btn">See more</Link>
         </div>
         <div className="card-image-wrapper">
           <img src="/images/cans.png" alt="Food Staples" />
@@ -105,7 +116,7 @@ const Home = () => {
         <div className="card-content">
           <h3>Health and Beauty</h3>
           <p>Care for yourself, inside and out.</p>
-          <Link to="/shop" className="see-more-btn">See more</Link>
+          <Link to="/shop?category=Hygiene" className="see-more-btn">See more</Link>
         </div>
         <div className="card-image-wrapper">
           <img src="/images/beauty.png" alt="Health and Beauty" />
@@ -117,7 +128,7 @@ const Home = () => {
         <div className="card-content">
           <h3>Other Grocery Products</h3>
           <p>All the additional essentials you need.</p>
-          <Link to="/shop" className="see-more-btn">See more</Link>
+          <Link to="/shop?category=Cooking Essentials" className="see-more-btn">See more</Link>
         </div>
         <div className="card-image-wrapper">
           <img src="/images/other.png" alt="Other Grocery Products" />
