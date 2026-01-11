@@ -12,3 +12,5 @@ export { default as LocationPicker } from './LocationPicker';
 export { default as OrderTimeline } from './OrderTimeline';
 export { default as OrderCard } from './OrderCard';
 export { default as StoreMap } from './StoreMap';
+export { default as RevenueChart } from './RevenueChart';
+export { default as TopProductsChart } from './TopProductsChart';

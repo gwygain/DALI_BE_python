@@ -17,6 +17,8 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [total, setTotal] = useState(0);
+  const [voucherCode, setVoucherCode] = useState(null);
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // Calculate cart count from items
@@ -115,10 +117,33 @@ export const CartProvider = ({ children }) => {
         setSubtotal(subtotalCalc);
         setTotal(subtotalCalc);
       } else {
+        console.log('[CartContext] Fetching cart from server...');
         const response = await cartService.getCart();
+        console.log('[CartContext] Server response:', response);
+        console.log('[CartContext] Voucher from response:', {
+          voucher_code: response.voucher_code,
+          voucher_discount: response.voucher_discount
+        });
         setCartItems(response.items || []);
         setSubtotal(response.subtotal || 0);
         setTotal(response.total || 0);
+        
+        // Store voucher in both state AND localStorage for persistence
+        const vCode = response.voucher_code || null;
+        const vDiscount = response.voucher_discount || 0;
+        setVoucherCode(vCode);
+        setVoucherDiscount(vDiscount);
+        
+        if (vCode) {
+          localStorage.setItem('applied_voucher', JSON.stringify({ code: vCode, discount: vDiscount }));
+        } else {
+          localStorage.removeItem('applied_voucher');
+        }
+        
+        console.log('[CartContext] State updated with voucher:', {
+          voucherCode: vCode,
+          voucherDiscount: vDiscount
+        });
       }
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -304,9 +329,16 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const clearVoucher = () => {
+    setVoucherCode(null);
+    setVoucherDiscount(0);
+  };
+
   const value = {
     cartItems,
     cartCount,
+    voucherCode,
+    voucherDiscount,
     subtotal,
     total,
     loading,
@@ -316,6 +348,7 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
+    clearVoucher,
   };
 
   return (

@@ -31,6 +31,11 @@ class ShippingStatus(str, enum.Enum):
     DELIVERY_FAILED = "DELIVERY_FAILED"
 
 
+class DiscountType(str, enum.Enum):
+    PERCENTAGE = "percentage"
+    FIXED_AMOUNT = "fixed_amount"
+
+
 # Location Models
 class Province(Base):
     __tablename__ = "provinces"
@@ -85,6 +90,7 @@ class Store(Base):
     
     # Relationships
     order_pickups = relationship("OrderPickup", back_populates="store")
+    inventory = relationship("StoreInventory", back_populates="store")
 
 
 # Product Model
@@ -101,12 +107,30 @@ class Product(Base):
     product_category = Column(String(255))
     # ------    
     product_subcategory = Column(String(255))
-    product_quantity = Column(Integer, nullable=False)
+    product_quantity = Column(Integer, nullable=False)  # Global/default quantity (legacy)
     image = Column(String(255))
     
     # Relationships
     cart_items = relationship("CartItem", back_populates="product")
     order_items = relationship("OrderItem", back_populates="product")
+    inventory = relationship("StoreInventory", back_populates="product")
+
+
+# Store Inventory Model (Store-specific product quantities)
+class StoreInventory(Base):
+    __tablename__ = "store_inventory"
+    
+    inventory_id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.store_id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False, index=True)
+    quantity = Column(Integer, nullable=False, default=0, index=True)
+    low_stock_threshold = Column(Integer, default=10)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    updated_at = Column(DateTime(timezone=False), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    store = relationship("Store", back_populates="inventory")
+    product = relationship("Product", back_populates="inventory")
 
 
 # Account Model
@@ -169,6 +193,10 @@ class AdminAccount(Base):
     account_email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     is_super_admin = Column(Boolean, default=False)
+    store_id = Column(Integer, ForeignKey("stores.store_id"), nullable=True)
+    
+    # Relationships
+    store = relationship("Store", foreign_keys=[store_id])
 
 
 # Address Model
@@ -225,6 +253,8 @@ class Order(Base):
     delivery_method = Column(String(255), nullable=False)
     payment_method = Column(String(255), nullable=False)
     total_price = Column(Numeric(10, 2), nullable=False)
+    voucher_code = Column(String(50), ForeignKey("vouchers.voucher_code", ondelete="SET NULL"), nullable=True)
+    voucher_discount = Column(Numeric(10, 2), default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -234,6 +264,7 @@ class Order(Base):
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     order_history = relationship("OrderHistory", back_populates="order", cascade="all, delete-orphan", order_by="OrderHistory.event_timestamp.desc()")
     order_pickup = relationship("OrderPickup", back_populates="order", uselist=False, cascade="all, delete-orphan")
+    voucher = relationship("Voucher", back_populates="orders", foreign_keys=[voucher_code])
     
     @property
     def subtotal(self):
@@ -309,3 +340,43 @@ class AuditLog(Base):
     entity_id = Column(Integer, nullable=True)
     details = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# Voucher Models
+class Voucher(Base):
+    __tablename__ = "vouchers"
+    
+    voucher_code = Column(String(50), primary_key=True)
+    description = Column(Text, nullable=False)
+    discount_type = Column(String(20), nullable=False)
+    discount_value = Column(Numeric(10, 2), nullable=False)
+    min_purchase_amount = Column(Numeric(10, 2), nullable=True)
+    max_discount_amount = Column(Numeric(10, 2), nullable=True)
+    valid_from = Column(DateTime, nullable=False)
+    valid_until = Column(DateTime, nullable=False)
+    usage_limit = Column(Integer, nullable=True)
+    usage_count = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    voucher_usages = relationship("VoucherUsage", back_populates="voucher", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="voucher")
+
+
+class VoucherUsage(Base):
+    __tablename__ = "voucher_usage"
+    
+    usage_id = Column(Integer, primary_key=True, index=True)
+    voucher_code = Column(String(50), ForeignKey("vouchers.voucher_code", ondelete="CASCADE"), nullable=False)
+    account_id = Column(Integer, ForeignKey("accounts.account_id", ondelete="CASCADE"), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.order_id", ondelete="SET NULL"), nullable=True)
+    discount_amount = Column(Numeric(10, 2), nullable=False)
+    used_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    voucher = relationship("Voucher", back_populates="voucher_usages")
+    account = relationship("Account")
+    order = relationship("Order", foreign_keys=[order_id])
+

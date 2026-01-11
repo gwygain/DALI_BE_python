@@ -22,6 +22,7 @@ const AdminHeader = () => {
             <Link to="/admin/inventory">Inventory</Link>
             {isSuperAdmin && <Link to="/admin/add-product">Add Product</Link>}
             <Link to="/admin/orders">Orders</Link>
+            {isSuperAdmin && <Link to="/admin/vouchers">Vouchers</Link>}
             <Link to="/admin/audit">Audit</Link>
           </nav>
         </div>

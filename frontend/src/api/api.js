@@ -90,7 +90,11 @@ export const adminAPI = {
   getOrder: (id) => api.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, status) => api.put(`/admin/orders/${id}/status`, { status }),
   getStats: () => api.get('/admin/stats'),
+  getLowStockProducts: () => api.get('/admin/low-stock-products'),
   getAudit: (params = {}) => api.get('/admin/audit', { params }),
+  // Chart data endpoints
+  getRevenueByMonth: (months = 12) => api.get(`/admin/stats/revenue-by-month?months=${months}`),
+  getTopProducts: (period = 'monthly', limit = 10) => api.get(`/admin/stats/top-products?period=${period}&limit=${limit}`),
 };
 
 export default api;

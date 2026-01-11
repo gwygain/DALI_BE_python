@@ -68,7 +68,9 @@ CREATE TABLE accounts (
 CREATE TABLE admin_accounts (
                                 admin_id      SERIAL PRIMARY KEY,
                                 account_email   VARCHAR(255) UNIQUE NOT NULL,
-                                password_hash   VARCHAR(255) NOT NULL
+                                password_hash   VARCHAR(255) NOT NULL,
+                                is_super_admin  BOOLEAN DEFAULT FALSE,
+                                store_id        INTEGER REFERENCES stores(store_id)
 );
 
 CREATE TABLE addresses (

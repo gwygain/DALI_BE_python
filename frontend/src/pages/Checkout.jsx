@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { checkoutService, addressService, storeService } from '../services';
+import cartService from '../services/cartService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 import { AddressForm } from '../components';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, subtotal, clearCart } = useCart();
+  const { cartItems, subtotal, clearCart, voucherCode, voucherDiscount, fetchCart } = useCart();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState('address'); // address, shipping, payment
   const [addresses, setAddresses] = useState([]);
@@ -24,6 +27,10 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [addingAddress, setAddingAddress] = useState(false);
   const [storeSearch, setStoreSearch] = useState('');
+
+  // Voucher state
+  const [voucherInput, setVoucherInput] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
 
   // Priority fee addition (matches backend)
   const priorityFeeAddition = 100;
@@ -59,10 +66,42 @@ const Checkout = () => {
     loadData();
   }, [subtotal]);
 
-  // Recalculate total when shipping changes
+  // Voucher handlers
+  const handleApplyVoucher = async (e) => {
+    e.preventDefault();
+    if (!voucherInput.trim()) {
+      showToast('Please enter a voucher code', 'error');
+      return;
+    }
+
+    setApplyingVoucher(true);
+    try {
+      const response = await cartService.applyVoucher(voucherInput.trim());
+      showToast(`Voucher applied! Saved ₱${response.discount_amount.toFixed(2)}`, 'success');
+      setVoucherInput('');
+      await fetchCart();
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Invalid voucher code';
+      showToast(errorMessage, 'error');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    try {
+      await cartService.removeVoucher();
+      showToast('Voucher removed', 'success');
+      await fetchCart();
+    } catch (error) {
+      showToast('Failed to remove voucher', 'error');
+    }
+  };
+
+  // Recalculate total when shipping or voucher changes
   useEffect(() => {
-    setTotal(subtotal + shipping);
-  }, [subtotal, shipping]);
+    setTotal(subtotal - (voucherDiscount || 0) + shipping);
+  }, [subtotal, shipping, voucherDiscount]);
 
   const handleAddressSubmit = async () => {
     if (!selectedAddressId) {
@@ -501,6 +540,51 @@ const Checkout = () => {
               </div>
             </div>
 
+            {/* Voucher Section */}
+            <div className="voucher-payment-section">
+              <div className="voucher-section-header">
+                <span className="voucher-icon">🎫</span>
+                <span>Have a voucher code?</span>
+              </div>
+              
+              {!voucherCode ? (
+                <div className="voucher-input-container">
+                  <div className="voucher-input-group">
+                    <input
+                      type="text"
+                      value={voucherInput}
+                      onChange={(e) => setVoucherInput(e.target.value)}
+                      placeholder="Enter voucher code"
+                      className="voucher-input-field"
+                    />
+                    <button
+                      onClick={handleApplyVoucher}
+                      disabled={applyingVoucher || !voucherInput.trim()}
+                      className="voucher-apply-btn"
+                    >
+                      {applyingVoucher ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="voucher-applied-container">
+                  <div className="voucher-success-card">
+                    <div className="voucher-success-info">
+                      <span className="voucher-code-badge">{voucherCode}</span>
+                      <span className="voucher-savings">You saved {formatPrice(voucherDiscount)}</span>
+                    </div>
+                    <button
+                      onClick={handleRemoveVoucher}
+                      className="voucher-remove-btn"
+                      title="Remove voucher"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handlePaymentSubmit}
               className="btn btn-primary checkout-btn"
@@ -532,6 +616,12 @@ const Checkout = () => {
           <span>Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
+        {voucherCode && (
+          <div className="summary-row voucher-applied">
+            <span>Voucher ({voucherCode})</span>
+            <span className="discount-amount">-{formatPrice(voucherDiscount)}</span>
+          </div>
+        )}
         <div className="summary-row">
           <span>Shipping</span>
           <span id="shipping-display">

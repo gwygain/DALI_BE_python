@@ -192,8 +192,17 @@ const OrderDetailsPage = () => {
               <h3>Order Summary</h3>
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>₱{(parseFloat(order.total_price) - 50).toFixed(2)}</span>
+                <span>₱{(parseFloat(order.total_price) - 50 + parseFloat(order.voucher_discount || 0)).toFixed(2)}</span>
               </div>
+              {order.voucher_code && order.voucher_discount > 0 && (
+                <div className="summary-row voucher-discount-row">
+                  <div className="voucher-summary-info">
+                    <span className="voucher-code-chip">{order.voucher_code}</span>
+                    <span className="voucher-label">Voucher Applied</span>
+                  </div>
+                  <span className="voucher-discount-amount">-₱{parseFloat(order.voucher_discount).toFixed(2)}</span>
+                </div>
+              )}
               <div className="summary-row">
                 <span>Shipping</span>
                 <span>₱50.00</span>
@@ -203,6 +212,23 @@ const OrderDetailsPage = () => {
                 <span>₱{parseFloat(order.total_price).toFixed(2)}</span>
               </div>
             </section>
+
+            {/* Voucher Information Section */}
+            {order.voucher_code && order.voucher_discount > 0 && (
+              <section className="sidebar-section voucher-info-section">
+                <h3>💳 Voucher Applied</h3>
+                <div className="voucher-info-card">
+                  <div className="voucher-code-display">
+                    <span className="voucher-code-label">Code:</span>
+                    <span className="voucher-code-value">{order.voucher_code}</span>
+                  </div>
+                  <div className="voucher-savings">
+                    <span className="savings-label">You saved:</span>
+                    <span className="savings-amount">₱{parseFloat(order.voucher_discount).toFixed(2)}</span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Actions */}
             {order.shipping_status === 'PROCESSING' && (

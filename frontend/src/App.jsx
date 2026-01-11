@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import AdminLayout from './components/AdminLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import SuperAdminRoute from './components/SuperAdminRoute'
 
 // Public Pages
 import Home from './pages/Home'
@@ -34,6 +35,7 @@ import AdminOrderDetail from './pages/admin/AdminOrderDetail'
 import AdminProductDetail from './pages/admin/AdminProductDetail'
 import AdminAudit from './pages/admin/AdminAudit'
 import AddProduct from './pages/admin/AddProduct'
+import AdminVouchers from './pages/admin/AdminVouchers'
 
 function App() {
   return (
@@ -73,11 +75,18 @@ function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/inventory" element={<AdminInventory />} />
-          <Route path="/admin/add-product" element={<AddProduct />} />
-          <Route path="/admin/inventory/:id" element={<AdminProductDetail />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
+        </Route>
+      </Route>
+      
+      {/* Super Admin Only Routes */}
+      <Route element={<SuperAdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/add-product" element={<AddProduct />} />
+          <Route path="/admin/inventory/:id" element={<AdminProductDetail />} />
+          <Route path="/admin/vouchers" element={<AdminVouchers />} />
         </Route>
       </Route>
     </Routes>

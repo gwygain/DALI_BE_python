@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { productService } from '../../services';
+import { productService, adminService } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import EditDiscountModal from '../../components/EditDiscountModal';
 
@@ -75,16 +75,21 @@ const AdminInventory = () => {
       if (selectedCategory) params.category = selectedCategory;
       if (selectedSubcategory) params.subcategory = selectedSubcategory;
       
-      const response = await productService.getProducts(params);
-      console.log('Products response:', response);
-      // Backend returns array directly, or object with products property
-      let productList = Array.isArray(response) ? response : (response.products || []);
+      // Use admin inventory endpoint to get store-specific quantities
+      const response = await adminService.getInventory(params);
+      console.log('Admin inventory response:', response);
+      
+      // Extract products from response (response.data for axios)
+      let productList = response.data || response;
+      console.log('Product list before filters:', productList, 'Length:', productList?.length);
       
       // Apply stock level filter
       if (stockFilter === 'out') {
         productList = productList.filter(p => p.product_quantity === 0);
+        console.log('After out-of-stock filter:', productList.length);
       } else if (stockFilter === 'low') {
-        productList = productList.filter(p => p.product_quantity > 0 && p.product_quantity <= 10);
+        productList = productList.filter(p => p.product_quantity > 0 && p.product_quantity < 10);
+        console.log('After low-stock filter:', productList.length, 'Items:', productList.map(p => ({name: p.product_name, qty: p.product_quantity})));
       }
       
       // Apply sale status filter
@@ -94,7 +99,7 @@ const AdminInventory = () => {
         productList = productList.filter(p => !p.is_on_sale || p.product_discount_price == null);
       }
       
-      console.log('Product list:', productList);
+      console.log('Final product list:', productList);
       setProducts(productList);
       if (productList.length === 0) {
         setErrorMessage('No products found');
@@ -218,7 +223,7 @@ const AdminInventory = () => {
                 checked={stockFilter === 'low'}
                 onChange={() => setStockFilter('low')}
               />
-              <label htmlFor="stock-low" style={{ color: '#856404' }}>Low Stock (≤10)</label>
+              <label htmlFor="stock-low" style={{ color: '#856404' }}>Low Stock (Below 10)</label>
             </li>
             <li>
               <input
@@ -361,28 +366,30 @@ const AdminInventory = () => {
                         fontSize: '0.9rem', 
                         boxSizing: 'border-box',
                         display: 'block',
-                        marginBottom: '8px'
+                        marginBottom: isSuperAdmin ? '8px' : '0'
                       }}
                     >
                       Manage Product
                     </Link>
-                    <button 
-                      className="btn btn-secondary btn-small" 
-                      onClick={() => handleManageDiscount(product)}
-                      style={{ 
-                        width: '100%', 
-                        textAlign: 'center',
-                        padding: '10px 16px',
-                        fontSize: '0.9rem',
-                        backgroundColor: '#fef0f7', 
-                        color: '#a1127c', 
-                        border: '1px solid #a1127c',
-                        boxSizing: 'border-box',
-                        display: 'block'
-                      }}
-                    >
-                      Manage Sale
-                    </button>
+                    {isSuperAdmin && (
+                      <button 
+                        className="btn btn-secondary btn-small" 
+                        onClick={() => handleManageDiscount(product)}
+                        style={{ 
+                          width: '100%', 
+                          textAlign: 'center',
+                          padding: '10px 16px',
+                          fontSize: '0.9rem',
+                          backgroundColor: '#fef0f7', 
+                          color: '#a1127c', 
+                          border: '1px solid #a1127c',
+                          boxSizing: 'border-box',
+                          display: 'block'
+                        }}
+                      >
+                        Manage Sale
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

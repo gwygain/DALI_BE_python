@@ -28,34 +28,52 @@ from sqlalchemy.orm import Session
 from app.models import Account, AdminAccount
 from app.core.security import get_password_hash
 
-def seed_super_admin():
-    if settings.SUPER_ADMIN_EMAIL and settings.SUPER_ADMIN_PASSWORD:
-        db = Session(bind=engine)
-        try:
-            super_admin_account = db.query(Account).filter(Account.account_email == settings.SUPER_ADMIN_EMAIL).first()
-            if not super_admin_account:
-                super_admin_account = Account(
-                    account_first_name="Super",
-                    account_last_name="Admin",
-                    account_email=settings.SUPER_ADMIN_EMAIL,
-                    password_hash=get_password_hash(settings.SUPER_ADMIN_PASSWORD),
-                    is_super_admin=True,
-                    is_email_verified=True
-                )
-                db.add(super_admin_account)
-                db.commit()
+from fastapi import FastAPI
+from sqlalchemy.orm import Session
+from app.core.database import SessionLocal
+from app.models import Account, AdminAccount
+from app.core.security import get_password_hash
 
-            admin = db.query(AdminAccount).filter(AdminAccount.account_email == settings.SUPER_ADMIN_EMAIL).first()
-            if not admin:
-                admin = AdminAccount(
-                    account_email=settings.SUPER_ADMIN_EMAIL,
-                    password_hash=get_password_hash(settings.SUPER_ADMIN_PASSWORD),
-                    is_super_admin=True
-                )
-                db.add(admin)
-                db.commit()
-        finally:
-            db.close()
+def seed_super_admin():
+    db: Session = SessionLocal()
+    try:
+        if not (settings.SUPER_ADMIN_EMAIL and settings.SUPER_ADMIN_PASSWORD):
+            return
+
+        # Account table
+        account = db.query(Account).filter(
+            Account.account_email == settings.SUPER_ADMIN_EMAIL
+        ).first()
+
+        if not account:
+            account = Account(
+                account_first_name="Super",
+                account_last_name="Admin",
+                account_email=settings.SUPER_ADMIN_EMAIL,
+                password_hash=get_password_hash(settings.SUPER_ADMIN_PASSWORD),
+                is_super_admin=True,
+                is_email_verified=True
+            )
+            db.add(account)
+            db.commit()
+
+        # Admin table
+        admin = db.query(AdminAccount).filter(
+            AdminAccount.account_email == settings.SUPER_ADMIN_EMAIL
+        ).first()
+
+        if not admin:
+            admin = AdminAccount(
+                account_email=settings.SUPER_ADMIN_EMAIL,
+                password_hash=get_password_hash(settings.SUPER_ADMIN_PASSWORD),
+                is_super_admin=True
+            )
+            db.add(admin)
+            db.commit()
+
+    finally:
+        db.close()
+
 
 seed_super_admin()
 

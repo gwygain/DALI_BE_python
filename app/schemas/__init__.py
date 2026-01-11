@@ -260,6 +260,8 @@ class OrderResponse(BaseModel):
     delivery_method: str
     payment_method: str
     total_price: Decimal
+    voucher_code: Optional[str] = None
+    voucher_discount: Optional[Decimal] = None
     created_at: datetime
     updated_at: datetime
     account: Optional[AccountResponse] = None

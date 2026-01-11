@@ -36,6 +36,9 @@ const OrderCard = ({ order, onViewDetails }) => {
           <span>{formatDate(order.created_at)}</span> •{' '}
           <span>{order.total_item_count || order.order_items?.length} items</span> •{' '}
           <span>{order.payment_method}</span>
+          {order.voucher_code && (
+            <span className="voucher-indicator"> • 🎫 Voucher Applied</span>
+          )}
         </p>
         <p className="order-card-price">{formatPrice(order.total_price)}</p>
       </div>

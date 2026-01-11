@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
+import cartService from '../services/cartService';
+import './CartPage.css';
 
 const Cart = () => {
-  const { cartItems, subtotal, loading, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, subtotal, loading, updateQuantity, removeFromCart, clearCart, voucherCode, voucherDiscount, fetchCart, clearVoucher } = useCart();
   const { showToast } = useToast();
+  const [voucherInput, setVoucherInput] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
 
   const formatPrice = (price) => {
     if (price === null || price === undefined || price === '') return '—';
@@ -33,6 +38,35 @@ const Cart = () => {
       } else {
         showToast(result.error || 'Failed to clear cart', 'error');
       }
+    }
+  };
+
+  const handleApplyVoucher = async (e) => {
+    e.preventDefault();
+    if (!voucherInput.trim()) return;
+
+    setApplyingVoucher(true);
+    try {
+      const response = await cartService.applyVoucher(voucherInput.toUpperCase());
+      showToast(`Voucher applied! You save ₱${response.discount_amount.toFixed(2)}`, 'success');
+      setVoucherInput('');
+      await fetchCart();
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to apply voucher';
+      showToast(errorMessage, 'error');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    try {
+      await cartService.removeVoucher();
+      clearVoucher(); // Force clear voucher data in context
+      showToast('Voucher removed', 'success');
+      await fetchCart();
+    } catch (error) {
+      showToast('Failed to remove voucher', 'error');
     }
   };
 
@@ -119,11 +153,20 @@ const Cart = () => {
 
           <div className="cart-summary-panel">
             <h2>Order Summary</h2>
+            <hr />
             <div className="summary-row">
               <span>Subtotal</span>
               {/* This correctly uses the pre-calculated subtotal from your CartContext */}
               <span>{formatPrice(subtotal)}</span>
             </div>
+            
+            {voucherCode && (
+              <div className="summary-row voucher-discount">
+                <span>Voucher ({voucherCode})</span>
+                <span className="discount-amount">-₱{voucherDiscount.toFixed(2)}</span>
+              </div>
+            )}
+            
             <div className="summary-row">
               <span>Shipping</span>
               <span>Calculated at checkout</span>
@@ -131,7 +174,7 @@ const Cart = () => {
             <hr />
             <div className="summary-row total-row">
               <span>Total</span>
-              <span>{formatPrice(subtotal)}</span>
+              <span>{formatPrice(subtotal - (voucherDiscount || 0))}</span>
             </div>
             <Link to="/checkout" className="btn btn-primary checkout-btn">
               Continue to checkout
