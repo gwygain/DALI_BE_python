@@ -610,8 +610,7 @@ body {
     .dali-audit-table tbody td { display:block; padding:12px 16px; }
     .dali-audit-table tbody tr { margin-bottom: 12px; border-bottom: none; }
 }
-    padding: 0;
-
+    
 
 .filter-sidebar .subcategory-list {
     padding-left: 20px; 
