@@ -296,7 +296,7 @@ const Checkout = () => {
               &lt; Back to Address
             </button>
             <h2>Delivery Option</h2>
-            <p className="sub-header">
+            <p className="sub-header" style={{ marginBottom: '1.5rem' }}>
               Your shipping fee has been calculated based on your selected address.
               Please choose a delivery type to continue.
             </p>
