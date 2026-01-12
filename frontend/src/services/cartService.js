@@ -30,6 +30,24 @@ const cartService = {
     const response = await api.delete('/cart');
     return response.data;
   },
+
+  // Apply voucher
+  applyVoucher: async (voucherCode) => {
+    const response = await api.post('/cart/apply-voucher', { voucher_code: voucherCode });
+    return response.data;
+  },
+
+  // Remove voucher
+  removeVoucher: async () => {
+    const response = await api.delete('/cart/remove-voucher');
+    return response.data;
+  },
+
+  // Get voucher info
+  getVoucherInfo: async () => {
+    const response = await api.get('/cart/voucher-info');
+    return response.data;
+  },
 };
 
 export default cartService;

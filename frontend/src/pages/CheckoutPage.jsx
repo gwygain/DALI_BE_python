@@ -3,11 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { addressesAPI, checkoutAPI, storesAPI, locationsAPI } from '../api/api';
+import { useToast } from '../components/Toast';
+import cartService from '../services/cartService';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
-  const { cart, fetchCart } = useCart();
+  const { cartItems, subtotal, total: cartTotal, voucherCode, voucherDiscount, fetchCart, loading: cartLoading } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
@@ -21,6 +24,11 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [storeSearch, setStoreSearch] = useState('');
+  const [cartDataLoaded, setCartDataLoaded] = useState(false);
+  
+  // Voucher state
+  const [voucherInput, setVoucherInput] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
   
   // Address form
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -37,12 +45,14 @@ const CheckoutPage = () => {
   });
 
   useEffect(() => {
+    console.log('[CheckoutPage] Mount - Initializing...');
+    
     if (!user) {
       navigate('/login', { state: { from: { pathname: '/checkout' } } });
       return;
     }
     
-    if (cart.items.length === 0) {
+    if (!cartItems || cartItems.length === 0) {
       navigate('/cart');
       return;
     }
@@ -50,7 +60,25 @@ const CheckoutPage = () => {
     fetchAddresses();
     fetchStores();
     fetchProvinces();
-  }, [user, cart, navigate]);
+    
+    // Ensure cart data including voucher is fresh
+    const loadCartData = async () => {
+      await fetchCart();
+      setCartDataLoaded(true);
+    };
+    loadCartData();
+  }, [user, navigate]);  // Run once on mount
+  
+  // Log voucher state changes
+  useEffect(() => {
+    console.log('[CheckoutPage] Voucher state:', {
+      voucherCode,
+      voucherDiscount,
+      subtotal,
+      cartTotal,
+      cartDataLoaded
+    });
+  }, [voucherCode, voucherDiscount, subtotal, cartTotal, cartDataLoaded]);
 
   const fetchAddresses = async () => {
     try {
@@ -209,9 +237,41 @@ const CheckoutPage = () => {
         setLoading(false);
       }
     }
+  const handleApplyVoucher = async (e) => {
+    e.preventDefault();
+    if (!voucherInput.trim()) {
+      showToast('Please enter a voucher code', 'error');
+      return;
+    }
+
+    setApplyingVoucher(true);
+    try {
+      const response = await cartService.applyVoucher(voucherInput.trim());
+      showToast(`Voucher applied! Saved ₱${response.discount_amount.toFixed(2)}`, 'success');
+      setVoucherInput('');
+      await fetchCart(); // Refresh cart to show updated totals
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Invalid voucher code';
+      showToast(errorMessage, 'error');
+    } finally {
+      setApplyingVoucher(false);
+    }
   };
 
-  const total = cart.subtotal + shippingFee;
+  const handleRemoveVoucher = async () => {
+    try {
+      await cartService.removeVoucher();
+      showToast('Voucher removed', 'success');
+      await fetchCart(); // Refresh cart to show updated totals
+    } catch (error) {
+      showToast('Failed to remove voucher', 'error');
+    }
+  };
+
+  };
+
+  // Calculate total with shipping and voucher discount
+  const finalTotal = subtotal - (voucherDiscount || 0) + shippingFee;
 
   return (
     <div className="checkout-page">
@@ -482,7 +542,7 @@ const CheckoutPage = () => {
           <div className="checkout-summary">
             <h2>Order Summary</h2>
             <div className="summary-items">
-              {cart.items.map((item) => (
+              {cartItems.map((item) => (
                 <div key={item.product_id} className="summary-item">
                   <span>{item.product_name} x {item.quantity}</span>
                   <span>₱{item.subtotal.toFixed(2)}</span>
@@ -491,15 +551,22 @@ const CheckoutPage = () => {
             </div>
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>₱{cart.subtotal.toFixed(2)}</span>
+              <span>₱{subtotal.toFixed(2)}</span>
             </div>
+            
+            {voucherCode && (
+              <div className="summary-row voucher-applied">
+                <span>Voucher ({voucherCode})</span>
+                <span className="discount-amount">-₱{(voucherDiscount || 0).toFixed(2)}</span>
+              </div>
+            )}
             <div className="summary-row">
               <span>Shipping</span>
-              <span>{shippingFee > 0 ? `₱${shippingFee.toFixed(2)}` : 'Free'}</span>
+              <span>{shippingFee > 0 ? `₱${shippingFee.toFixed(2)}` : 'Calculated at checkout'}</span>
             </div>
             <div className="summary-total">
               <span>Total</span>
-              <span>₱{total.toFixed(2)}</span>
+              <span>₱{finalTotal.toFixed(2)}</span>
             </div>
             <button 
               className="btn btn-primary btn-full"

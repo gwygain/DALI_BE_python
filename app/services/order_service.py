@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.models import (
     Order, OrderItem, OrderHistory, OrderPickup,
-    Account, Address, Product, PaymentStatus, ShippingStatus
+    Account, Address, Product, PaymentStatus, ShippingStatus,
+    Voucher, VoucherUsage
 )
 from app.services.cart_service import CartService
 
@@ -42,9 +43,74 @@ class OrderService:
             raise ValueError("Invalid address")
         
         # Calculate total
-        subtotal = CartService.get_cart_total(cart_items)
+        subtotal = 0.0
+        for item in cart_items:
+            product = item["product"]
+            qty = item["quantity"]
+            
+            # Logic: Determine the applicable price
+            if product.is_on_sale and product.product_discount_price is not None:
+                current_price = float(product.product_discount_price)
+            else:
+                current_price = float(product.product_price)
+            
+            subtotal += current_price * qty
+
         shipping_fee = checkout_details.get("shippingFee", 0.0)
-        total = subtotal + shipping_fee
+        
+        # Handle voucher discount
+        voucher_code = None
+        voucher_discount = 0.0
+        applied_voucher = request.session.get("applied_voucher")
+        
+        if applied_voucher:
+            voucher_code = applied_voucher.get("voucher_code")
+            voucher_discount = applied_voucher.get("discount_amount", 0)
+            
+            # Re-validate voucher before creating order
+            voucher = db.query(Voucher).filter(Voucher.voucher_code == voucher_code).first()
+            if voucher and voucher.is_active:
+                now = datetime.utcnow()
+                
+                # Convert voucher dates to naive datetime for comparison
+                valid_from = voucher.valid_from.replace(tzinfo=None) if voucher.valid_from.tzinfo else voucher.valid_from
+                valid_until = voucher.valid_until.replace(tzinfo=None) if voucher.valid_until.tzinfo else voucher.valid_until
+                
+                if valid_from <= now <= valid_until:
+                    # Check if already used by this user
+                    existing_usage = db.query(VoucherUsage).filter(
+                        VoucherUsage.voucher_code == voucher_code,
+                        VoucherUsage.account_id == user.account_id
+                    ).first()
+                    
+                    if existing_usage:
+                        # User already used this voucher, clear it
+                        voucher_code = None
+                        voucher_discount = 0.0
+                    elif voucher.usage_limit and voucher.usage_count >= voucher.usage_limit:
+                        # Usage limit reached
+                        voucher_code = None
+                        voucher_discount = 0.0
+                    else:
+                        # Voucher is valid, recalculate discount to prevent tampering
+                        if voucher.discount_type == "percentage":
+                            calculated_discount = subtotal * (float(voucher.discount_value) / 100)
+                            if voucher.max_discount_amount:
+                                calculated_discount = min(calculated_discount, float(voucher.max_discount_amount))
+                        else:
+                            calculated_discount = min(float(voucher.discount_value), subtotal)
+                        
+                        voucher_discount = calculated_discount
+                else:
+                    # Voucher expired
+                    voucher_code = None
+                    voucher_discount = 0.0
+            else:
+                # Voucher not found or inactive
+                voucher_code = None
+                voucher_discount = 0.0
+        
+        total = subtotal + shipping_fee - voucher_discount
         
         # Determine payment status based on payment method
         payment_method = checkout_details.get("paymentMethod")
@@ -62,7 +128,9 @@ class OrderService:
             shipping_status=ShippingStatus.PROCESSING,
             delivery_method=checkout_details.get("deliveryMethod"),
             payment_method=payment_method,
-            total_price=total
+            total_price=total,
+            voucher_code=voucher_code,
+            voucher_discount=voucher_discount
         )
         
         db.add(order)
@@ -99,12 +167,33 @@ class OrderService:
                 db.add(order_pickup)
         
         # Create order history
+        # Create order history
         history = OrderHistory(
             order_id=order.order_id,
             status="PROCESSING",
             notes="Order placed successfully"
         )
         db.add(history)
+        
+        # Record voucher usage if applied
+        if voucher_code and voucher_discount > 0:
+            voucher = db.query(Voucher).filter(Voucher.voucher_code == voucher_code).first()
+            if voucher:
+                # Increment usage count
+                voucher.usage_count += 1
+                
+                # Record usage in voucher_usage table
+                voucher_usage = VoucherUsage(
+                    voucher_code=voucher_code,
+                    account_id=user.account_id,
+                    order_id=order.order_id,
+                    discount_amount=voucher_discount
+                )
+                db.add(voucher_usage)
+        
+        # Clear voucher from session
+        if "applied_voucher" in request.session:
+            del request.session["applied_voucher"]
         
         # Clear cart
         CartService.clear_cart(db, request, user)
@@ -135,7 +224,17 @@ class OrderService:
         # Calculate total
         subtotal = CartService.get_cart_total(cart_items)
         shipping_fee = checkout_details.get("shippingFee", 0.0)
-        total = subtotal + shipping_fee
+        
+        # Handle voucher discount
+        voucher_code = None
+        voucher_discount = 0.0
+        applied_voucher = request.session.get("applied_voucher")
+        
+        if applied_voucher:
+            voucher_code = applied_voucher.get("voucher_code")
+            voucher_discount = applied_voucher.get("discount_amount", 0)
+        
+        total = subtotal + shipping_fee - voucher_discount
         
         # Create order with PENDING status
         order = Order(
@@ -145,7 +244,9 @@ class OrderService:
             shipping_status=ShippingStatus.PROCESSING,
             delivery_method=checkout_details.get("deliveryMethod"),
             payment_method=checkout_details.get("paymentMethod"),
-            total_price=total
+            total_price=total,
+            voucher_code=voucher_code,
+            voucher_discount=voucher_discount
         )
         
         db.add(order)

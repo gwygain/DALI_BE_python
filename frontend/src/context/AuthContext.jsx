@@ -91,10 +91,15 @@ export const AuthProvider = ({ children }) => {
 
   // Admin authentication
   const adminLogin = async (email, password) => {
-    // Backend returns { message, admin_email }
+    // Backend returns { message, admin_email, is_super_admin, store_id, store_name }
     const response = await authService.adminLogin(email, password);
-    // response now includes is_super_admin
-    const adminData = { email: response.admin_email, is_super_admin: !!response.is_super_admin };
+    // response now includes is_super_admin, store_id, and store_name
+    const adminData = { 
+      email: response.admin_email, 
+      is_super_admin: !!response.is_super_admin,
+      store_id: response.store_id,
+      store_name: response.store_name
+    };
     setAdmin(adminData);
     localStorage.setItem('admin', JSON.stringify(adminData));
     return response;

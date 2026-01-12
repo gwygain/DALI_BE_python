@@ -84,6 +84,10 @@ class ProductBase(BaseModel):
     product_name: str
     product_description: Optional[str] = None
     product_price: Decimal
+    # Discount
+    product_discount_price: Optional[Decimal] = None
+    is_on_sale: bool = False
+    # ---------------------------
     product_category: Optional[str] = None
     product_subcategory: Optional[str] = None
     product_quantity: int
@@ -257,6 +261,8 @@ class OrderResponse(BaseModel):
     delivery_method: str
     payment_method: str
     total_price: Decimal
+    voucher_code: Optional[str] = None
+    voucher_discount: Optional[Decimal] = None
     created_at: datetime
     updated_at: datetime
     account: Optional[AccountResponse] = None
