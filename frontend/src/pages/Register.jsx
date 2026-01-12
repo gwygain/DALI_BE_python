@@ -109,13 +109,11 @@ const Register = () => {
   return (
     <div className="auth-page-wrapper">
       <div className="auth-card">
-        {/* Image Panel */}
-        <div className="auth-image-panel">
-          <Link to="/shop" className="back-to-shop-btn">
-            <span>&lt;</span>&nbsp;Back to shop
-          </Link>
-          <img src="/images/login.png" alt="Shopping cart with groceries" />
-        </div>
+
+    <div className="auth-image-panel" style={{ position: 'relative' }}>
+      <Link to="/shop" className="back-to-shop-btn" style={{ position: 'absolute', top: '30px', left: '30px', margin: 0 }}>
+    <span>&lt;</span>&nbsp;Back to shop </Link> <img src="/images/login.png" alt="Shopping cart with groceries" />
+    </div>
 
         {/* Form Panel */}
         <div className="auth-form-panel">

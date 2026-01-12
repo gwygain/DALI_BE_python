@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
+import './Cart.css';
 
 const Cart = () => {
   const { cartItems, subtotal, loading, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -120,9 +121,8 @@ const Cart = () => {
               Continue to checkout
             </Link>
             <button 
-              className="btn btn-outline" 
-              onClick={handleClearCart} 
-              style={{ marginTop: '40px', padding: '8px 16px', fontSize: '13px' }}
+              className="btn btn-outline clear-cart-btn" 
+              onClick={handleClearCart}
             >
               Clear Cart
             </button>
