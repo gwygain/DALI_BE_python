@@ -94,6 +94,29 @@ body {
     margin-right: 5px;
 }
 
+.profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #a1127c, #b21984);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.profile-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(161, 18, 124, 0.3);
+}
+
+.profile-link svg {
+    flex-shrink: 0;
+}
+
 .nav a {
     margin-right: 30px;
     margin-left: 0;
@@ -102,6 +125,20 @@ body {
     font-weight: 600;
     transition: all 0.3s ease;
     position: relative;
+}
+
+.nav .sale-link {
+    background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+    color: white !important;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    margin-right: 30px;
+}
+
+.nav .sale-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(161, 18, 124, 0.3);
 }
 
 .header-actions a {
@@ -794,6 +831,7 @@ body {
     justify-content: center;
     aspect-ratio: 1 / 1;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
 }
 
 .product-detail-image:hover {
@@ -1183,6 +1221,18 @@ body {
     justify-content: space-between; 
     margin-bottom: 15px; 
 }
+
+/* Ensure voucher lines in the cart/checkout summary are green when applied */
+.checkout-summary-panel .summary-row.voucher-applied span,
+.cart-summary-panel .summary-row.voucher-applied span {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+.cart-summary-panel .summary-row.voucher-applied .discount-amount,
+.checkout-summary-panel .summary-row.voucher-applied .discount-amount {
+  color: #16a34a !important;
+  font-weight: 700;
+}
 .total-row { 
     font-weight: 700; 
     font-size: 1.2rem; }
@@ -1254,6 +1304,66 @@ body {
 .checkout-back-link:hover {
     color: #b21984;
 }
+
+/* Voucher (matches payment option cards) */
+.voucher-payment-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* match payment gap */
+    margin-top: 1rem;
+}
+
+.voucher-option {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* match payment gap */
+    padding: 20px; /* match payment padding */
+    border: 2px solid #eee;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.voucher-icon {
+    width: 43px;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    font-size: 22px; /* emoji size to match images */
+    line-height: 1;
+}
+
+.voucher-icon img,
+.voucher-icon svg {
+    width: 43px;
+    height: 43px;
+    object-fit: contain;
+    display: block;
+}
+
+.voucher-content { display:flex; flex-direction:column; flex:1; }
+.voucher-content strong { font-weight:700; font-size:1.05rem; color:#333; margin:0; }
+.voucher-content p { margin:0; color:#666; font-size:0.95rem; }
+
+.voucher-inline { display:flex; gap:20px; align-items:center; margin-top:0.5rem; }
+
+.voucher-input-field { flex:1; padding: 0 12px; height:40px; border:1px solid #ddd; border-radius:8px; font-weight:600; box-sizing:border-box; }
+.voucher-input-field:focus { outline:none; border-color:#b21984; box-shadow:0 0 0 2px rgba(178,25,132,0.08); }
+
+.voucher-apply-btn { height:40px; padding:0 14px; background:#f3f3f3; color:#555; border:1px solid #ddd; border-radius:8px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+.voucher-apply-btn:hover:not(:disabled) { background: linear-gradient(135deg,#a1127c 0%,#b21984 100%); color:#fff; transform:translateY(-2px); box-shadow:0 4px 12px rgba(161,18,124,0.3); }
+
+/* Highlight when a voucher is applied (uses :has to detect applied container) */
+.voucher-option:has(.voucher-applied-container) {
+    border-color: #a1127c;
+    background: #fef0f7;
+    box-shadow: 0 0 0 2px rgba(178,25,132,0.04);
+}
+
+.voucher-success-card { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#e8f5e8 0%,#f1f8e9 50%); border:2px solid #4caf50; border-radius:12px; padding:12px; }
+
+/* end voucher styles */
 
 .checkout-content h2 { 
     margin-bottom: 25px; 
@@ -1977,6 +2087,11 @@ body {
     font-size: 0.85rem;
     color: #666;
     margin-bottom: 8px;
+}
+
+.voucher-indicator {
+    color: #9c27b0;
+    font-weight: 600;
 }
 .order-card-price {
     font-size: 1.1rem;
@@ -3164,4 +3279,60 @@ body {
     .admin-audit-table th:nth-child(5), .admin-audit-table td:nth-child(5) { display: none; }
     .admin-audit-table th:nth-child(4), .admin-audit-table td:nth-child(4) { width: 100%; }
     .audit-details { font-size: 0.85rem; gap: 8px; }
+}
+
+/* Sale Feature Styles */
+.product-card {
+    position: relative; /* Needed for the absolute sale badge */
+}
+
+.sale-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #a1127c 0%, #d91a5b 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(161, 18, 124, 0.3);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.price-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.sale-price {
+    color: var(--primary-color); /* DALI Magenta */
+    font-weight: 700;
+}
+
+.original-price-strikethrough {
+    color: #999;
+    text-decoration: line-through;
+    font-size: 0.85rem;
+}
+
+.cart-sale-tag {
+    background-color: #fef0f7;
+    color: var(--primary-color);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: 8px;
+    text-transform: uppercase;
+}
+
+.original-price-strikethrough.small {
+    font-size: 0.75rem;
+    margin-left: 5px;
 }

@@ -41,6 +41,7 @@ const AdminDashboard = () => {
       const response = await adminAPI.getStats();
       setStats(response.data);
     } catch (error) {
+      console.error('Stats Error:', error);
       if (error.response?.status === 401) {
         navigate('/admin/login');
       }

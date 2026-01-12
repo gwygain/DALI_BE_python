@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast';
 import './CartPage.css';
 
 const CartPage = () => {
-  const { cart, loading, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, subtotal, total, loading, updateQuantity, removeFromCart, clearCart } = useCart();
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ const CartPage = () => {
         
         <h1>Your Cart</h1>
 
-        {cart.items.length === 0 ? (
+        {cartItems.length === 0 ? (
           <div className="empty-cart">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2">
               <circle cx="9" cy="21" r="1"></circle>
@@ -91,7 +91,7 @@ const CartPage = () => {
                 <span className="header-actions"></span>
               </div>
 
-              {cart.items.map((item) => (
+              {cartItems.map((item) => (
                 <div key={item.product_id} className="cart-item">
                   <div className="item-product">
                     <img 
@@ -145,17 +145,19 @@ const CartPage = () => {
 
             <div className="cart-summary">
               <h2>Order Summary</h2>
+
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>₱{cart.subtotal.toFixed(2)}</span>
+                <span>₱{subtotal.toFixed(2)}</span>
               </div>
+              
               <div className="summary-row">
                 <span>Shipping</span>
                 <span>Calculated at checkout</span>
               </div>
               <div className="summary-total">
                 <span>Total</span>
-                <span>₱{cart.total.toFixed(2)}</span>
+                <span>₱{total.toFixed(2)}</span>
               </div>
               <button className="btn btn-primary btn-full" onClick={handleCheckout}>
                 Proceed to Checkout

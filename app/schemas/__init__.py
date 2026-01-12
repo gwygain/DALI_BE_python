@@ -84,6 +84,10 @@ class ProductBase(BaseModel):
     product_name: str
     product_description: Optional[str] = None
     product_price: Decimal
+    # Discount
+    product_discount_price: Optional[Decimal] = None
+    is_on_sale: bool = False
+    # ---------------------------
     product_category: Optional[str] = None
     product_subcategory: Optional[str] = None
     product_quantity: int
@@ -212,10 +216,13 @@ class OrderItemBase(BaseModel):
 class OrderItemResponse(OrderItemBase):
     order_item_id: int
     product: ProductResponse
+    unit_price: Optional[Decimal] = None  # Price at time of purchase (may be discounted)
     
     @property
     def subtotal(self):
-        return float(self.product.product_price) * self.quantity
+        # Use unit_price if available, otherwise fall back to product price
+        price = float(self.unit_price) if self.unit_price is not None else float(self.product.product_price)
+        return price * self.quantity
     
     class Config:
         from_attributes = True
@@ -257,6 +264,8 @@ class OrderResponse(BaseModel):
     delivery_method: str
     payment_method: str
     total_price: Decimal
+    voucher_code: Optional[str] = None
+    voucher_discount: Optional[Decimal] = None
     created_at: datetime
     updated_at: datetime
     account: Optional[AccountResponse] = None

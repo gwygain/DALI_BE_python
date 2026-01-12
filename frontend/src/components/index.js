@@ -15,3 +15,6 @@ export { default as StoreMap } from './StoreMap';
 export { default as StarRating } from './StarRating';
 export { default as ReviewList } from './ReviewList';
 export { default as ReviewForm } from './ReviewForm';
+export { default as RevenueChart } from './RevenueChart';
+export { default as TopProductsChart } from './TopProductsChart';
+export { default as ConfirmModal } from './ConfirmModal';
