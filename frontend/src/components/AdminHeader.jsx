@@ -1,12 +1,16 @@
+import { useState } from 'react'; 
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AdminHeader = () => {
   const { admin, adminLogout, isSuperAdmin } = useAuth();
+  
+  // State to track confirmation
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleLogout = async (e) => {
-    e.preventDefault();
+  const handleLogout = async () => {
     await adminLogout();
+    setShowConfirm(false);
   };
 
   return (
@@ -25,6 +29,7 @@ const AdminHeader = () => {
             <Link to="/admin/audit">Audit</Link>
           </nav>
         </div>
+        
         <div className="admin-header-right">
           {admin?.store && (
             <div className="store-display">
@@ -40,11 +45,37 @@ const AdminHeader = () => {
               {admin.store.store_name}
             </div>
           )}
-          <form onSubmit={handleLogout}>
-            <button type="submit" className="logout-button-linkstyle">
-              Logout
-            </button>
-          </form>
+
+        
+          <div className="logout-container" style={{ display: 'inline-block', marginLeft: '15px' }}>
+            {!showConfirm ? (
+              <button 
+                type="button" 
+                onClick={() => setShowConfirm(true)} 
+                className="logout-button-linkstyle"
+              >
+                Logout
+              </button>
+            ) : (
+              <span style={{ fontSize: '0.9rem' }}>
+                Confirm? 
+                <button 
+                  onClick={handleLogout} 
+                  className="logout-button-linkstyle" 
+                  style={{ color: 'green', fontWeight: 'bold', marginLeft: '10px' }}
+                >
+                  Yes
+                </button>
+                <button 
+                  onClick={() => setShowConfirm(false)} 
+                  className="logout-button-linkstyle" 
+                  style={{ color: 'red', fontWeight: 'bold', marginLeft: '10px' }}
+                >
+                  No
+                </button>
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </header>

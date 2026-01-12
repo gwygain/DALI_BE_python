@@ -145,7 +145,7 @@ const AdminAudit = () => {
   }, [page, totalPages]);
 
   return (
-    <div className="container admin-audit-page">
+    <div className="container admin-audit-page" style={{ paddingBottom: '80px' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}></div>
       <h2>Audit Logs</h2>
       {/* Stats Row */}
@@ -316,17 +316,60 @@ const AdminAudit = () => {
                 })}
               </tbody>
             </table>
-            {/* Pagination Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-              <div style={{ color: '#666' }}>
-                Showing {(filtered.length === 0) ? 0 : ( (page - 1) * itemsPerPage + 1 )} - {Math.min(page * itemsPerPage, filtered.length)} of {filtered.length}
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button className="btn btn-outline btn-small" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</button>
-                <div style={{ fontSize: '0.9rem', color: '#333' }}>Page {page} of {totalPages}</div>
-                <button className="btn btn-outline btn-small" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
-              </div>
-            </div>
+{/* Pagination Controls */}
+<div style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  padding: '10px 24px 24px 24px', // Top, Right, Bottom, Left
+  marginTop: '12px'
+}}>
+  <div style={{ color: '#606770', fontSize: '0.95rem' }}>
+    Showing {(filtered.length === 0) ? 0 : ( (page - 1) * itemsPerPage + 1 )} - {Math.min(page * itemsPerPage, filtered.length)} of {filtered.length}
+  </div>
+  
+  <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+    <button 
+      className="btn" 
+      style={{
+        padding: '8px 24px',
+        borderRadius: '30px',
+        border: 'none',
+        backgroundColor: '#f8f9fa',
+        color: page <= 1 ? '#bfc4c9' : '#444',
+        cursor: page <= 1 ? 'not-allowed' : 'pointer',
+        fontSize: '0.9rem',
+        fontWeight: '500'
+      }}
+      disabled={page <= 1} 
+      onClick={() => setPage(p => Math.max(1, p - 1))}
+    >
+      Prev
+    </button>
+
+    <div style={{ fontSize: '0.95rem', color: '#1c1e21' }}>
+      Page {page} of {totalPages}
+    </div>
+
+    <button 
+      className="btn" 
+      style={{
+        padding: '8px 24px',
+        borderRadius: '30px',
+        border: 'none',
+        backgroundColor: '#f8f9fa',
+        color: page >= totalPages ? '#bfc4c9' : '#000',
+        fontWeight: 'bold',
+        cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+        fontSize: '0.9rem'
+      }}
+      disabled={page >= totalPages} 
+      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+    >
+      Next
+    </button>
+  </div>
+  </div>
           </div>
         )}
       </div>

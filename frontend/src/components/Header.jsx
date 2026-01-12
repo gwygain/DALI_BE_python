@@ -1,14 +1,22 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
+  
+  // State to track if we are in the "confirmation" phase
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleLogout = async (e) => {
-    e.preventDefault();
+  const handleLogout = async () => {
     await logout();
+    setShowConfirm(false); // Reset state after logging out
+  };
+
+  const cancelLogout = () => {
+    setShowConfirm(false); // Go back to showing the "Logout" button
   };
 
   return (
@@ -19,10 +27,12 @@ const Header = () => {
             <img src="/images/dali-logo.png" alt="DALI Logo" />
           </Link>
         </div>
+        
         <nav className="nav">
           <Link to="/shop">Shop</Link>
           <Link to="/stores">Stores</Link>
         </nav>
+
         <div className="header-actions">
           <Link to="/cart">Cart ({cartCount})</Link>
 
@@ -31,11 +41,37 @@ const Header = () => {
           ) : (
             <>
               <Link to="/profile">Profile</Link>
-              <form onSubmit={handleLogout} style={{ display: 'inline' }}>
-                <button type="submit" className="logout-button-linkstyle">
-                  Logout
-                </button>
-              </form>
+              
+              <div className="logout-container" style={{ display: 'inline-block', marginLeft: '10px' }}>
+                {!showConfirm ? (
+                  /* Initial Logout Button */
+                  <button 
+                    onClick={() => setShowConfirm(true)} 
+                    className="logout-button-linkstyle"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  /* Confirmation State */
+                  <span style={{ fontSize: '0.9rem' }}>
+                    Confirm? 
+                    <button 
+                      onClick={handleLogout} 
+                      className="logout-button-linkstyle" 
+                      style={{ color: 'green', fontWeight: 'bold', marginLeft: '8px' }}
+                    >
+                      Yes
+                    </button>
+                    <button 
+                      onClick={cancelLogout} 
+                      className="logout-button-linkstyle" 
+                      style={{ color: 'red', fontWeight: 'bold', marginLeft: '8px' }}
+                    >
+                      No
+                    </button>
+                  </span>
+                )}
+              </div>
             </>
           )}
         </div>

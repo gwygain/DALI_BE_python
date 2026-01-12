@@ -23,9 +23,7 @@ const Footer = () => {
               >
                 <i className="bx bxl-facebook-square"></i>
               </a>
-              <a href="#" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
-                <i className="bx bxl-twitter"></i>
-              </a>
+
               <a
                 href="https://www.instagram.com/dalieverydaygrocery/?hl=en"
                 aria-label="Instagram"
@@ -34,9 +32,7 @@ const Footer = () => {
               >
                 <i className="bx bxl-instagram-alt"></i>
               </a>
-              <a href="#" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
-                <i className="bx bxl-youtube"></i>
-              </a>
+              
             </div>
           </div>
           <div className="footer-links">
