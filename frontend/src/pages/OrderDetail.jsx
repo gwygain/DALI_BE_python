@@ -92,9 +92,12 @@ const OrderDetail = () => {
   const getStatusClass = (status) => {
     const statusMap = {
       PROCESSING: 'processing',
-      SHIPPED: 'shipped',
+      PREPARING_FOR_SHIPMENT: 'processing',
+      IN_TRANSIT: 'shipped',
       DELIVERED: 'delivered',
+      COLLECTED: 'collected',
       CANCELLED: 'cancelled',
+      DELIVERY_FAILED: 'cancelled',
     };
     return statusMap[status] || 'processing';
   };

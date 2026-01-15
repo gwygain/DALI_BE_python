@@ -248,22 +248,32 @@ const AdminAudit = () => {
                   }
                   
                   const actor = details.actor_name || a.actor_email || 'System';
+                  const isOrder = (a.entity_type || '').toLowerCase().includes('order');
                   const productFromDetails = details.product_name || details.product_title || details.name || details.product || details.title || details.sku;
-                  const product = productFromDetails || productNames[a.entity_id] || `${a.entity_type || 'Item'} ${a.entity_id? `#${a.entity_id}`:''}`;
+                  const orderLabel = isOrder ? `Order #${a.entity_id || ''}` : '';
+                  const product = productFromDetails || orderLabel || productNames[a.entity_id] || `${a.entity_type || 'Item'} ${a.entity_id? `#${a.entity_id}`:''}`;
                   
                   // Extract values based on naming conventions (support several key names)
                   const actionLower = (a.action || '').toLowerCase();
                   let before;
                   let after;
-                  if (actionLower.includes('create')) {
+                  if (isOrder) {
+                    // For orders, show status changes
+                    before = details.old_status || details.before || '';
+                    after = details.new_status || details.after || '';
+                  } else if (actionLower.includes('create')) {
                     // New product: before defaults to 0, after should prefer created quantity
                     before = details.old_quantity ?? details.old_qty ?? details.old_value ?? details.old_price ?? 0;
                     after = details.new_quantity ?? details.quantity ?? details.product_quantity ?? details.new_value ?? details.new_price ?? details.price ?? '';
+                  } else if (actionLower.includes('discount')) {
+                    // For discount updates, use old_discount/new_discount or before/after
+                    before = details.before ?? details.old_discount ?? details.old_value ?? '';
+                    after = details.after ?? details.new_discount ?? details.new_value ?? '';
                   } else {
                     before = details.before ?? details.old_value ?? details.old_price ?? details.old_stock ?? details.old_quantity ?? details.old_qty ?? details.price ?? details.quantity ?? '';
                     after = details.after ?? details.new_value ?? details.new_price ?? details.new_stock ?? details.new_quantity ?? details.new_qty ?? details.price ?? details.quantity ?? '';
                   }
-                  const isPrice = actionLower.includes('price');
+                  const isPrice = actionLower.includes('price') || actionLower.includes('discount');
                   const isStock = actionLower.includes('stock');
 
                   const delta = (()=>{
@@ -277,6 +287,7 @@ const AdminAudit = () => {
                     <tr key={a.audit_id}>
                       <td style={{ color: '#666', fontSize: '0.85rem' }}>
                         {a.created_at ? new Date(a.created_at).toLocaleString('en-PH', { 
+                          timeZone: 'Asia/Manila',
                           year: 'numeric', month: 'short', day: 'numeric', 
                           hour: '2-digit', minute: '2-digit' 
                         }) : ''}
@@ -298,13 +309,13 @@ const AdminAudit = () => {
                         {details.sku && <div style={{ fontSize: '0.75rem', color: '#888', fontFamily: 'monospace' }}>SKU: {details.sku}</div>}
                       </td>
                       <td className="diff-val">
-                        {before === '' ? '—' : isPrice ? formatPrice(before) : String(before)}
+                        {before === '' || before === null || before === undefined ? '—' : isPrice ? formatPrice(before) : String(before)}
                       </td>
                       <td className="diff-val">
-                        {after === '' ? '—' : isPrice ? formatPrice(after) : String(after)}
+                        {after === '' || after === null || after === undefined ? '—' : isPrice ? formatPrice(after) : String(after)}
                       </td>
                       <td className="diff-val">
-                        {delta !== '' ? (
+                        {delta !== '' && !Number.isNaN(delta) ? (
                           <span className={delta > 0 ? 'diff-up' : delta < 0 ? 'diff-down' : 'diff-neutral'}>
                             {delta > 0 ? '↑ ' : delta < 0 ? '↓ ' : ''}
                             {isPrice ? formatPrice(Math.abs(delta)) : Math.abs(delta)}

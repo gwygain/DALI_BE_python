@@ -1850,6 +1850,9 @@ body {
 .status-dot.delivered {
     background-color: #28a745; /* Green for Delivered */
 }
+.status-dot.collected {
+    background-color: #28a745; /* Green for Collected */
+}
 .status-dot.cancelled {
     background-color: #dc3545; /* Red for Cancelled */
 }
@@ -2737,6 +2740,7 @@ body {
 .timeline-dot.processing { background-color: #ffc107; }
 .timeline-dot.shipped { background-color: #17a2b8; }
 .timeline-dot.delivered { background-color: #28a745; }
+.timeline-dot.collected { background-color: #28a745; }
 .timeline-dot.cancelled { background-color: #dc3545; }
 
 .timeline-content {

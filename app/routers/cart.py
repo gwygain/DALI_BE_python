@@ -255,19 +255,15 @@ async def apply_voucher(
     if now > valid_until:
         raise HTTPException(status_code=400, detail="This voucher has expired")
     
-    # Check usage limit
-    if voucher.usage_limit and voucher.usage_count >= voucher.usage_limit:
-        raise HTTPException(status_code=400, detail="This voucher has reached its usage limit")
-    
-    # Check if user has already used this voucher
-    if current_user:
-        existing_usage = db.query(VoucherUsage).filter(
+    # Check per-user usage limit
+    if current_user and voucher.usage_limit:
+        user_usage_count = db.query(VoucherUsage).filter(
             VoucherUsage.voucher_code == voucher_code,
             VoucherUsage.account_id == current_user.account_id
-        ).first()
+        ).count()
         
-        if existing_usage:
-            raise HTTPException(status_code=400, detail="You have already used this voucher")
+        if user_usage_count >= voucher.usage_limit:
+            raise HTTPException(status_code=400, detail=f"You have already used this voucher {voucher.usage_limit} time(s)")
     
     # Get cart subtotal
     cart_items = CartService.get_cart_items(db, request, current_user)

@@ -77,21 +77,22 @@ class OrderService:
                 valid_until = voucher.valid_until.replace(tzinfo=None) if voucher.valid_until.tzinfo else voucher.valid_until
                 
                 if valid_from <= now <= valid_until:
-                    # Check if already used by this user
-                    existing_usage = db.query(VoucherUsage).filter(
-                        VoucherUsage.voucher_code == voucher_code,
-                        VoucherUsage.account_id == user.account_id
-                    ).first()
+                    # Check per-user usage limit
+                    if voucher.usage_limit:
+                        user_usage_count = db.query(VoucherUsage).filter(
+                            VoucherUsage.voucher_code == voucher_code,
+                            VoucherUsage.account_id == user.account_id
+                        ).count()
+                        
+                        if user_usage_count >= voucher.usage_limit:
+                            # User has reached their usage limit for this voucher
+                            voucher_code = None
+                            voucher_discount = 0.0
+                        else:
+                            # User can still use this voucher
+                            pass
                     
-                    if existing_usage:
-                        # User already used this voucher, clear it
-                        voucher_code = None
-                        voucher_discount = 0.0
-                    elif voucher.usage_limit and voucher.usage_count >= voucher.usage_limit:
-                        # Usage limit reached
-                        voucher_code = None
-                        voucher_discount = 0.0
-                    else:
+                    if voucher_code:  # If voucher is still valid after limit check
                         # Voucher is valid, recalculate discount to prevent tampering
                         if voucher.discount_type == "percentage":
                             calculated_discount = subtotal * (float(voucher.discount_value) / 100)
@@ -433,7 +434,14 @@ class OrderService:
     @staticmethod
     def get_order_by_id(db: Session, order_id: int) -> Optional[Order]:
         """Get order by ID."""
-        return db.query(Order).filter(Order.order_id == order_id).first()
+        from sqlalchemy.orm import joinedload
+        return db.query(Order).options(
+            joinedload(Order.account),
+            joinedload(Order.address),
+            joinedload(Order.order_items).joinedload(OrderItem.product),
+            joinedload(Order.order_pickup).joinedload(OrderPickup.store),
+            joinedload(Order.order_history)
+        ).filter(Order.order_id == order_id).first()
     
     @staticmethod
     def set_payment_transaction_id(db: Session, order_id: int, transaction_id: str):

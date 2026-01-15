@@ -69,9 +69,12 @@ const AdminOrderDetail = () => {
   const getStatusClass = (status) => {
     const statusMap = {
       PROCESSING: 'processing',
-      SHIPPED: 'shipped',
+      PREPARING_FOR_SHIPMENT: 'processing',
+      IN_TRANSIT: 'shipped',
       DELIVERED: 'delivered',
+      COLLECTED: 'collected',
       CANCELLED: 'cancelled',
+      DELIVERY_FAILED: 'cancelled',
     };
     return statusMap[status] || 'processing';
   };
@@ -140,12 +143,12 @@ const AdminOrderDetail = () => {
             <p className="order-meta">{formatDate(order.created_at)}</p>
 
             {/* Customer Info */}
-            {order.customer && (
+            {order.account && (
               <div style={{ marginTop: '15px' }}>
-                <strong>Customer:</strong> {order.customer.first_name}{' '}
-                {order.customer.last_name}
+                <strong>Customer:</strong> {order.account.first_name}{' '}
+                {order.account.last_name}
                 <br />
-                <strong>Email:</strong> {order.customer.email}
+                <strong>Email:</strong> {order.account.email}
               </div>
             )}
 

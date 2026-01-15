@@ -29,35 +29,20 @@ const AdminHome = () => {
     try {
       setLoading(true);
       
-      // Fetch dashboard stats from backend API
       const statsResponse = await adminAPI.getStats();
-      
-      // Extract the actual data from axios response
       const statsData = statsResponse.data || statsResponse;
       
-      // Fetch recent orders
-      const ordersData = await adminAPI.getOrders();
-      const orders = Array.isArray(ordersData) ? ordersData : (ordersData.orders || []);
-      
-      // Sort orders by date (most recent first)
-      const sortedOrders = orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      
-      // Fetch store-specific low stock products from backend
       const lowStockData = await adminAPI.getLowStockProducts();
+      const lowStockProducts = Array.isArray(lowStockData.data) ? lowStockData.data : (Array.isArray(lowStockData) ? lowStockData : []);
       
-      // Use stats from API
       setStats({
         totalRevenue: statsData.total_revenue || 0,
         totalOrders: statsData.total_orders || 0,
         totalProducts: statsData.total_products || 0,
-        lowStockCount: statsData.stock_alerts || 0
+        lowStockCount: statsData.stock_alerts || statsData.low_stock_count || 0
       });
       
-      // Get recent 5 orders
-      setRecentOrders(sortedOrders.slice(0, 5));
-      
-      // Set low stock products from API (already filtered by store)
-      setLowStockProducts(lowStockData || []);
+      setLowStockProducts(lowStockProducts);
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -70,7 +55,6 @@ const AdminHome = () => {
     try {
       setChartsLoading(true);
       
-      // Fetch revenue by month data
       const revenueResponse = await adminAPI.getRevenueByMonth(12);
       const revenueDataResult = revenueResponse.data || revenueResponse;
       setRevenueData(revenueDataResult);
@@ -337,44 +321,6 @@ const AdminHome = () => {
             </Link>
           )}
         </div>
-      </div>
-
-      {/* Recent Orders */}
-      <div className="dashboard-section">
-        <div className="section-header">
-          <h2 className="section-title">Recent Orders</h2>
-          <Link to="/admin/orders" className="section-link">View all →</Link>
-        </div>
-        {recentOrders.length > 0 ? (
-          <div className="recent-orders-list">
-            {recentOrders.map((order) => (
-              <Link 
-                key={order.order_id} 
-                to={`/admin/orders/${order.order_id}`} 
-                className="order-item"
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <div className="order-info">
-                  <div className="order-id">Order #{order.order_id}</div>
-                  <div className="order-customer">
-                    {order.account?.account_first_name} {order.account?.account_last_name} • {formatDate(order.created_at)}
-                  </div>
-                </div>
-                <div className="order-amount">{formatPrice(order.total_amount)}</div>
-                <span className={`order-status ${getStatusClass(order.order_status)}`}>
-                  {order.order_status}
-                </span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <svg className="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" width="48" height="48">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            </svg>
-            <div className="empty-state-text">No orders yet</div>
-          </div>
-        )}
       </div>
 
       {/* Stock Alerts */}

@@ -34,11 +34,16 @@ const TopProductsChart = () => {
   const fetchTopProducts = async () => {
     try {
       setLoading(true);
+      console.log('Fetching top products with period:', period);
       const response = await adminAPI.getTopProducts(period, 10);
+      console.log('Top products response:', response);
       const result = response.data || response;
+      console.log('Top products data:', result);
       setData(result);
     } catch (error) {
       console.error('Error fetching top products:', error);
+      console.error('Error details:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       setData(null);
     } finally {
       setLoading(false);
@@ -120,7 +125,7 @@ const TopProductsChart = () => {
             const product = products[context.dataIndex];
             return [
               `Quantity: ${context.parsed.x} units`,
-              `Revenue: ${formatPrice(product.revenue)}`
+              `Revenue: ${formatPrice(product.total_revenue || 0)}`
             ];
           }
         }

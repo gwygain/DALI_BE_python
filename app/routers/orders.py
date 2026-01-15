@@ -2,12 +2,13 @@
 Orders router - handles order viewing and management (JSON API).
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user_required
 from app.services.order_service import OrderService
 from app.schemas import OrderResponse
+from app.models import Order, OrderItem, OrderPickup
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -18,7 +19,14 @@ async def get_user_orders(
     current_user = Depends(get_current_user_required)
 ):
     """Get all orders for current user."""
-    return current_user.orders
+    orders = db.query(Order).options(
+        joinedload(Order.account),
+        joinedload(Order.address),
+        joinedload(Order.order_items).joinedload(OrderItem.product),
+        joinedload(Order.order_pickup).joinedload(OrderPickup.store),
+        joinedload(Order.order_history)
+    ).filter(Order.account_id == current_user.account_id).order_by(Order.created_at.desc()).all()
+    return orders
 
 
 @router.get("/{order_id}", response_model=OrderResponse)

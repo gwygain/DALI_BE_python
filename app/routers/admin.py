@@ -30,14 +30,13 @@ import os
 import uuid
 from app.models import (
     Product, Order, AdminAccount, ShippingStatus, 
-    Account, AuditLog, Voucher, VoucherUsage, OrderItem, OrderPickup
+    Account, AuditLog, Voucher, VoucherUsage, OrderItem, OrderPickup, OrderHistory
 )
 from app.schemas import OrderResponse, ProductResponse, LoginRequest, ProductCreate
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-# --- SCHEMAS ---
 class UpdateDiscountRequest(BaseModel):
     product_discount_price: Optional[float] = None
     is_on_sale: bool
@@ -90,7 +89,11 @@ async def update_price(
             action='UPDATE_PRICE',
             entity_type='product',
             entity_id=product_id,
-            details=json.dumps({'old_price': old_price, 'new_price': new_price})
+            details=json.dumps({
+                'product_name': product.product_name,
+                'old_price': old_price,
+                'new_price': new_price
+            })
         )
         db.add(audit)
         db.commit()
@@ -117,8 +120,6 @@ class ProductUpdateRequest(BaseModel):
     product_description: Optional[str] = None
     product_category: Optional[str] = None
     product_subcategory: Optional[str] = None
-
-# --- ENDPOINTS ---
 
 @router.post("/login", response_model=AdminLoginResponse)
 async def admin_login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
@@ -198,7 +199,11 @@ async def update_stock(
             action='UPDATE_STOCK',
             entity_type='product',
             entity_id=product_id,
-            details=json.dumps({'old_quantity': old_qty, 'new_quantity': new_qty})
+            details=json.dumps({
+                'product_name': product.product_name,
+                'old_quantity': old_qty,
+                'new_quantity': new_qty
+            })
         )
         db.add(audit)
         db.commit()
@@ -252,10 +257,13 @@ async def update_discount(
             entity_type='product',
             entity_id=product_id,
             details=json.dumps({
+                'product_name': product.product_name,
                 'old_discount': float(old_discount) if old_discount else None,
                 'new_discount': float(product.product_discount_price) if product.product_discount_price else None,
                 'old_sale_status': old_sale_status,
-                'new_sale_status': product.is_on_sale
+                'new_sale_status': product.is_on_sale,
+                'before': float(old_discount) if old_discount else None,
+                'after': float(product.product_discount_price) if product.product_discount_price else None
             })
         )
         db.add(audit)
@@ -269,6 +277,19 @@ async def update_discount(
         "is_on_sale": product.is_on_sale,
         "product_discount_price": float(product.product_discount_price) if product.product_discount_price else None
     }
+
+
+@router.get("/products/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)
+):
+    """Get product details by ID (admin access)."""
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
 
 
 @router.put("/products/{product_id}")
@@ -330,6 +351,18 @@ async def get_dashboard_stats(
     total_products = db.query(Product).count()
     total_customers = db.query(Account).count()
     
+    # Order counts by status
+    pending_orders = db.query(Order).filter(Order.shipping_status == ShippingStatus.PROCESSING).count()
+    processing_orders = db.query(Order).filter(Order.shipping_status == ShippingStatus.PREPARING_FOR_SHIPMENT).count()
+    shipped_orders = db.query(Order).filter(Order.shipping_status == ShippingStatus.IN_TRANSIT).count()
+    completed_orders = db.query(Order).filter(
+        or_(Order.shipping_status == ShippingStatus.DELIVERED, Order.shipping_status == ShippingStatus.COLLECTED)
+    ).count()
+    cancelled_orders = db.query(Order).filter(Order.shipping_status == ShippingStatus.CANCELLED).count()
+    
+    # Active orders (pending + processing + shipped)
+    active_orders = pending_orders + processing_orders + shipped_orders
+    
     # Recent orders with relationships loaded
     recent_orders = db.query(Order).options(
         joinedload(Order.account),
@@ -348,9 +381,115 @@ async def get_dashboard_stats(
         "total_revenue": float(total_revenue),
         "total_products": total_products,
         "total_customers": total_customers,
+        "pending_orders": pending_orders,
+        "processing_orders": processing_orders,
+        "active_orders": active_orders,
+        "completed_orders": completed_orders,
+        "cancelled_orders": cancelled_orders,
         "recent_orders": serialized_recent_orders,
-        "low_stock_count": low_stock_count
+        "low_stock_count": low_stock_count,
+        "stock_alerts": low_stock_count  # Alias for frontend compatibility
     }
+
+@router.get("/stats/revenue-by-month")
+async def get_revenue_by_month(
+    months: int = Query(default=12, ge=1, le=24),
+    admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get revenue grouped by month for the specified number of months."""
+    # Calculate the start date
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=months * 30)  # Approximate month calculation
+    
+    # Query orders grouped by month
+    revenue_by_month = db.query(
+        extract('year', Order.created_at).label('year'),
+        extract('month', Order.created_at).label('month'),
+        func.sum(Order.total_price).label('revenue'),
+        func.count(Order.order_id).label('order_count')
+    ).filter(
+        Order.created_at >= start_date
+    ).group_by(
+        extract('year', Order.created_at),
+        extract('month', Order.created_at)
+    ).order_by(
+        extract('year', Order.created_at),
+        extract('month', Order.created_at)
+    ).all()
+    
+    # Format the results
+    result = []
+    for row in revenue_by_month:
+        month_name = datetime(int(row.year), int(row.month), 1).strftime('%B %Y')
+        result.append({
+            "month": month_name,
+            "month_year": month_name,  # Frontend expects month_year
+            "year": int(row.year),
+            "month_number": int(row.month),
+            "revenue": float(row.revenue or 0),
+            "order_count": int(row.order_count or 0)
+        })
+    
+    return result
+
+@router.get("/stats/top-products")
+async def get_top_products(
+    period: str = Query(default="monthly", regex="^(weekly|monthly|yearly|all)$"),
+    limit: int = Query(default=10, ge=1, le=50),
+    admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get top-selling products for the specified period."""
+    # Calculate date filter based on period
+    now = datetime.now()
+    if period == "weekly":
+        start_date = now - timedelta(days=7)
+    elif period == "monthly":
+        start_date = now - timedelta(days=30)
+    elif period == "yearly":
+        start_date = now - timedelta(days=365)
+    else:  # all
+        start_date = datetime(2000, 1, 1)  # Far past date to include all orders
+    
+    # Query top products by total quantity sold
+    top_products = db.query(
+        Product.product_id,
+        Product.product_name,
+        Product.product_category,
+        Product.product_price,
+        func.sum(OrderItem.quantity).label('total_sold'),
+        func.sum(OrderItem.quantity * OrderItem.unit_price).label('total_revenue')
+    ).join(
+        OrderItem, Product.product_id == OrderItem.product_id
+    ).join(
+        Order, OrderItem.order_id == Order.order_id
+    ).filter(
+        Order.created_at >= start_date
+    ).group_by(
+        Product.product_id,
+        Product.product_name,
+        Product.product_category,
+        Product.product_price
+    ).order_by(
+        desc('total_sold')
+    ).limit(limit).all()
+    
+    # Format the results
+    result = []
+    for row in top_products:
+        result.append({
+            "product_id": row.product_id,
+            "product_name": row.product_name,
+            "category": row.product_category,
+            "price": float(row.product_price),
+            "quantity_sold": int(row.total_sold or 0),  # Frontend expects quantity_sold
+            "total_sold": int(row.total_sold or 0),  # Keep for backwards compatibility
+            "total_revenue": float(row.total_revenue or 0)
+        })
+    
+    return {"products": result}  # Wrap in object with products key
+
 @router.get("/orders", response_model=List[OrderResponse])
 async def get_orders(
     search: Optional[str] = None,
@@ -361,7 +500,8 @@ async def get_orders(
     # Base query with all relationships loaded for OrderCard components
     query = db.query(Order).options(
         joinedload(Order.account),
-        joinedload(Order.order_items).joinedload(OrderItem.product)
+        joinedload(Order.order_items).joinedload(OrderItem.product),
+        joinedload(Order.order_history)
     )
 
     if search:
@@ -386,7 +526,8 @@ async def get_admin_order(
     order = db.query(Order).options(
         joinedload(Order.account),
         joinedload(Order.order_items).joinedload(OrderItem.product),
-        joinedload(Order.pickup_details)
+        joinedload(Order.order_pickup),
+        joinedload(Order.order_history)
     ).filter(Order.order_id == order_id).first()
     
     if not order:
@@ -401,10 +542,7 @@ async def update_order_status(
     admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Update order shipping status (Super Admin only)."""
-    if not admin.is_super_admin:
-        raise HTTPException(status_code=403, detail="Super admin access required")
-        
+    """Update order shipping status (All admins can update)."""
     order = db.query(Order).filter(Order.order_id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -412,17 +550,37 @@ async def update_order_status(
     new_status = status_data.get("status")
     if not new_status:
         raise HTTPException(status_code=400, detail="Status is required")
-        
+    
+    notes = status_data.get("notes", "")
+    
+    # Get old status before update
+    old_status = order.shipping_status
+    
     order.shipping_status = new_status
     order.updated_at = datetime.utcnow()
     
-    # Log the status change
+    # Create order history record
+    history = OrderHistory(
+        order_id=order_id,
+        status=new_status,
+        notes=notes if notes else f"Status updated to {new_status}"
+    )
+    db.add(history)
+    
+    # Log the status change in audit log with structured details
     log = AuditLog(
-        admin_id=admin.admin_id,
+        actor_email=admin.account_email,
         action="UPDATE",
         entity_type="Order",
         entity_id=order_id,
-        details=f"Updated status to {new_status}"
+        details=json.dumps({
+            'order_id': order_id,
+            'old_status': old_status.value if hasattr(old_status, 'value') else str(old_status),
+            'new_status': new_status,
+            'before': old_status.value if hasattr(old_status, 'value') else str(old_status),
+            'after': new_status,
+            'notes': notes if notes else ''
+        })
     )
     db.add(log)
     db.commit()
@@ -449,18 +607,11 @@ async def get_audit_logs(
 ):
     """Retrieve recent audit log entries (admin access).
     
-    - Super admins see all audit logs (global)
-    - Regular admins only see their own audit logs (their store's activities)
+    - All admins can see all audit logs (including super admin actions)
     """
     query = db.query(AuditLog).order_by(AuditLog.created_at.desc())
     
-    # Filter for regular admins - only show their own actions
-    if not getattr(admin, 'is_super_admin', False):
-        actor_email = getattr(admin, 'account_email', None)
-        if actor_email:
-            query = query.filter(AuditLog.actor_email == actor_email)
-    
-    # Super admins see all logs (no filter applied)
+    # All admins see all logs (no filter applied)
     logs = query.limit(limit).all()
     
     # Convert datetime to ISO string for response_model compatibility
@@ -477,41 +628,6 @@ async def get_audit_logs(
         ))
     return result
 
-
-@router.get("/debug/store-orders/{store_id}")
-async def debug_store_orders(
-    store_id: int,
-    db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
-):
-    """Debug endpoint to check orders for a specific store."""
-    from app.models import OrderPickup
-    
-    # Get all order_pickups for this store
-    pickups = db.query(OrderPickup).filter(OrderPickup.store_id == store_id).all()
-    
-    pickup_data = []
-    for pickup in pickups:
-        order = db.query(Order).filter(Order.order_id == pickup.order_id).first()
-        if order:
-            pickup_data.append({
-                "order_id": order.order_id,
-                "total_price": float(order.total_price),
-                "payment_status": order.payment_status.value,
-                "shipping_status": order.shipping_status.value,
-                "created_at": order.created_at.isoformat() if order.created_at else None
-            })
-    
-    return {
-        "store_id": store_id,
-        "total_pickups": len(pickups),
-        "orders": pickup_data
-    }
-
-
-# =====================================================================
-# VOUCHER MANAGEMENT ENDPOINTS (SUPER ADMIN ONLY)
-# =====================================================================
 
 class VoucherCreateRequest(BaseModel):
     voucher_code: str

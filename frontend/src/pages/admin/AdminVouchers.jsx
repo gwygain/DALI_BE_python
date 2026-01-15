@@ -202,8 +202,6 @@ const AdminVouchers = () => {
             return <span className="status-badge inactive">Inactive</span>;
         } else if (validUntil < now) {
             return <span className="status-badge expired">Expired</span>;
-        } else if (voucher.usage_limit && voucher.usage_count >= voucher.usage_limit) {
-            return <span className="status-badge used-up">Used Up</span>;
         } else {
             return <span className="status-badge active">Active</span>;
         }
@@ -239,7 +237,8 @@ const AdminVouchers = () => {
                             <th>Discount</th>
                             <th>Min Purchase</th>
                             <th>Valid Until</th>
-                            <th>Usage</th>
+                            <th>Total Uses</th>
+                            <th>Per User Limit</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -247,7 +246,7 @@ const AdminVouchers = () => {
                     <tbody>
                         {vouchers.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="no-data">No vouchers found</td>
+                                <td colSpan="9" className="no-data">No vouchers found</td>
                             </tr>
                         ) : (
                             vouchers.map(voucher => (
@@ -257,10 +256,8 @@ const AdminVouchers = () => {
                                     <td>{formatDiscount(voucher)}</td>
                                     <td>{voucher.min_purchase_amount ? `₱${voucher.min_purchase_amount}` : '-'}</td>
                                     <td>{new Date(voucher.valid_until).toLocaleDateString()}</td>
-                                    <td>
-                                        {voucher.usage_count}
-                                        {voucher.usage_limit ? ` / ${voucher.usage_limit}` : ''}
-                                    </td>
+                                    <td>{voucher.usage_count} times</td>
+                                    <td>{voucher.usage_limit ? `${voucher.usage_limit} per user` : 'Unlimited'}</td>
                                     <td>{getStatusBadge(voucher)}</td>
                                     <td className="actions-cell">
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

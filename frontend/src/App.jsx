@@ -75,6 +75,7 @@ function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/inventory" element={<AdminInventory />} />
+          <Route path="/admin/inventory/:id" element={<AdminProductDetail />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
@@ -85,7 +86,6 @@ function App() {
       <Route element={<SuperAdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin/add-product" element={<AddProduct />} />
-          <Route path="/admin/inventory/:id" element={<AdminProductDetail />} />
           <Route path="/admin/vouchers" element={<AdminVouchers />} />
         </Route>
       </Route>

@@ -61,9 +61,13 @@ const AdminOrders = () => {
   const getStatusClass = (status) => {
     const statusMap = {
       PROCESSING: 'processing',
+      PREPARING_FOR_SHIPMENT: 'processing',
+      IN_TRANSIT: 'shipped',
       SHIPPED: 'shipped',
       DELIVERED: 'delivered',
+      COLLECTED: 'collected',
       CANCELLED: 'cancelled',
+      DELIVERY_FAILED: 'cancelled',
     };
     return statusMap[status] || 'processing';
   };
