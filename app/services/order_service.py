@@ -4,6 +4,7 @@ Order service for order management.
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
+from app.core.timezone import get_philippine_time
 from app.models import (
     Order, OrderItem, OrderHistory, OrderPickup,
     Account, Address, Product, PaymentStatus, ShippingStatus,
@@ -70,7 +71,7 @@ class OrderService:
             # Re-validate voucher before creating order
             voucher = db.query(Voucher).filter(Voucher.voucher_code == voucher_code).first()
             if voucher and voucher.is_active:
-                now = datetime.utcnow()
+                now = get_philippine_time()
                 
                 # Convert voucher dates to naive datetime for comparison
                 valid_from = voucher.valid_from.replace(tzinfo=None) if voucher.valid_from.tzinfo else voucher.valid_from
@@ -303,7 +304,7 @@ class OrderService:
         
         # Update order status
         order.payment_status = PaymentStatus.PAID
-        order.updated_at = datetime.utcnow()
+        order.updated_at = get_philippine_time()
         
         # Add history
         history = OrderHistory(
@@ -328,7 +329,7 @@ class OrderService:
         
         order.payment_status = PaymentStatus.CANCELLED
         order.shipping_status = ShippingStatus.CANCELLED
-        order.updated_at = datetime.utcnow()
+        order.updated_at = get_philippine_time()
         
         history = OrderHistory(
             order_id=order.order_id,
@@ -366,7 +367,7 @@ class OrderService:
             order.payment_status = PaymentStatus.REFUNDED
         else:
             order.payment_status = PaymentStatus.CANCELLED
-        order.updated_at = datetime.utcnow()
+        order.updated_at = get_philippine_time()
         
         history = OrderHistory(
             order_id=order.order_id,
@@ -390,7 +391,7 @@ class OrderService:
             raise ValueError("Order not found")
         
         order.shipping_status = status
-        order.updated_at = datetime.utcnow()
+        order.updated_at = get_philippine_time()
         
         # If cancelled, also update payment status
         if status == ShippingStatus.CANCELLED:

@@ -25,6 +25,7 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.core.security import get_current_admin, verify_password
+from app.core.timezone import get_philippine_time
 import json
 import os
 import uuid
@@ -557,7 +558,7 @@ async def update_order_status(
     old_status = order.shipping_status
     
     order.shipping_status = new_status
-    order.updated_at = datetime.utcnow()
+    order.updated_at = get_philippine_time()
     
     # Create order history record
     history = OrderHistory(

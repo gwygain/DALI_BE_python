@@ -11,6 +11,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 import enum
 from app.core.database import Base
+from app.core.timezone import get_philippine_time
 
 
 # Enums
@@ -215,7 +216,7 @@ class Address(Base):
     phone_number = Column(String(50))
     latitude = Column(Numeric(10, 7))
     longitude = Column(Numeric(10, 7))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
     is_default = Column(Boolean, default=False)
     
     # Relationships
@@ -258,8 +259,8 @@ class Order(Base):
     total_price = Column(Numeric(10, 2), nullable=False)
     voucher_code = Column(String(50), ForeignKey("vouchers.voucher_code", ondelete="SET NULL"), nullable=True)
     voucher_discount = Column(Numeric(10, 2), default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
+    updated_at = Column(DateTime, default=get_philippine_time, onupdate=get_philippine_time)
     
     # Relationships
     account = relationship("Account", back_populates="orders")
@@ -328,7 +329,7 @@ class OrderHistory(Base):
     order_id = Column(Integer, ForeignKey("orders.order_id", ondelete="CASCADE"), nullable=False)
     status = Column(String(255), nullable=False)
     notes = Column(String(1024), nullable=False)
-    event_timestamp = Column(DateTime, default=datetime.utcnow)
+    event_timestamp = Column(DateTime, default=get_philippine_time)
     
     # Relationships
     order = relationship("Order", back_populates="order_history")
@@ -345,7 +346,7 @@ class AuditLog(Base):
     entity_type = Column(String(255), nullable=False)
     entity_id = Column(Integer, nullable=True)
     details = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
 
 
 # Review Model
@@ -361,8 +362,8 @@ class Review(Base):
     comment = Column(Text)
     is_anonymous = Column(Boolean, default=False)
     is_edited = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
+    updated_at = Column(DateTime, default=get_philippine_time, onupdate=get_philippine_time)
     
     # Relationships
     product = relationship("Product", back_populates="reviews")
@@ -379,7 +380,7 @@ class ReviewImage(Base):
     image_id = Column(Integer, primary_key=True, index=True)
     review_id = Column(Integer, ForeignKey("reviews.review_id", ondelete="CASCADE"), nullable=False)
     image_url = Column(String(512), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
     
     # Relationships
     review = relationship("Review", back_populates="images")
@@ -400,8 +401,8 @@ class Voucher(Base):
     usage_limit = Column(Integer, nullable=True)
     usage_count = Column(Integer, default=0, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=get_philippine_time)
+    updated_at = Column(DateTime, default=get_philippine_time, onupdate=get_philippine_time)
     
     # Relationships
     voucher_usages = relationship("VoucherUsage", back_populates="voucher", cascade="all, delete-orphan")
@@ -416,7 +417,7 @@ class VoucherUsage(Base):
     account_id = Column(Integer, ForeignKey("accounts.account_id", ondelete="CASCADE"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.order_id", ondelete="SET NULL"), nullable=True)
     discount_amount = Column(Numeric(10, 2), nullable=False)
-    used_at = Column(DateTime, default=datetime.utcnow)
+    used_at = Column(DateTime, default=get_philippine_time)
     
     # Relationships
     voucher = relationship("Voucher", back_populates="voucher_usages")

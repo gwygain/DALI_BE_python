@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.timezone import get_philippine_time
 from app.services.cart_service import CartService
 from app.models import Product, Voucher, VoucherUsage
 from pydantic import BaseModel
@@ -244,7 +245,7 @@ async def apply_voucher(
     
     # Check if voucher is expired - simplified comparison
     from datetime import datetime
-    now = datetime.utcnow()
+    now = get_philippine_time()
     
     # Convert to naive datetime for comparison
     valid_from = voucher.valid_from.replace(tzinfo=None) if voucher.valid_from.tzinfo else voucher.valid_from
