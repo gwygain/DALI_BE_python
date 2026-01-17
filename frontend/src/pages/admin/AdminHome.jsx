@@ -127,7 +127,6 @@ const AdminHome = () => {
               </svg>
               Revenue Trends
             </h3>
-            <span className="chart-card-subtitle">Monthly comparison</span>
           </div>
           <RevenueChart data={revenueData} loading={chartsLoading} />
         </div>

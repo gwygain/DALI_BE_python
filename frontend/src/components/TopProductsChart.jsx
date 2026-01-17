@@ -165,20 +165,31 @@ const TopProductsChart = () => {
 
   return (
     <div>
-      {/* Period Toggle */}
-      <div className="period-toggle">
-        <button
-          className={period === 'weekly' ? 'active' : ''}
-          onClick={() => setPeriod('weekly')}
-        >
-          Weekly
-        </button>
-        <button
-          className={period === 'monthly' ? 'active' : ''}
-          onClick={() => setPeriod('monthly')}
-        >
-          Monthly
-        </button>
+      {/* Header with Period Toggle */}
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ margin: 0 }}>Top Selling Products</h3>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {['monthly', 'quarterly', 'yearly'].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              style={{
+                padding: '6px 16px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                background: period === p ? 'rgb(79, 70, 229)' : 'white',
+                color: period === p ? 'white' : '#666',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: period === p ? '600' : '400',
+                textTransform: 'capitalize',
+                transition: 'all 0.2s'
+              }}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Chart */}
@@ -210,19 +221,6 @@ const TopProductsChart = () => {
         <div style={{ height: '300px', position: 'relative' }}>
           <Bar ref={chartRef} data={chartData} options={options} />
         </div>
-      )}
-
-      {/* Period Label */}
-      {data && !loading && products.length > 0 && (
-        <p style={{ 
-          textAlign: 'center', 
-          fontSize: '13px', 
-          color: '#6B7280', 
-          marginTop: '12px',
-          marginBottom: 0 
-        }}>
-          {data.period_label}
-        </p>
       )}
     </div>
   );

@@ -439,9 +439,97 @@ async def get_revenue_by_month(
     
     return result
 
+@router.get("/stats/revenue-trends")
+async def get_revenue_trends(
+    period: str = Query(default="monthly", regex="^(monthly|quarterly|yearly)$"),
+    admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get revenue trends by period (monthly, quarterly, or yearly)."""
+    now = datetime.now()
+    
+    if period == "monthly":
+        # Last 12 months
+        start_date = now - timedelta(days=365)
+        revenue_data = db.query(
+            extract('year', Order.created_at).label('year'),
+            extract('month', Order.created_at).label('month'),
+            func.sum(Order.total_price).label('revenue'),
+            func.count(Order.order_id).label('order_count')
+        ).filter(
+            Order.created_at >= start_date
+        ).group_by(
+            extract('year', Order.created_at),
+            extract('month', Order.created_at)
+        ).order_by(
+            extract('year', Order.created_at),
+            extract('month', Order.created_at)
+        ).all()
+        
+        result = []
+        for row in revenue_data:
+            month_name = datetime(int(row.year), int(row.month), 1).strftime('%b %Y')
+            result.append({
+                "period": month_name,
+                "revenue": float(row.revenue or 0),
+                "order_count": int(row.order_count or 0)
+            })
+            
+    elif period == "quarterly":
+        # Last 8 quarters (2 years)
+        start_date = now - timedelta(days=730)
+        revenue_data = db.query(
+            extract('year', Order.created_at).label('year'),
+            extract('quarter', Order.created_at).label('quarter'),
+            func.sum(Order.total_price).label('revenue'),
+            func.count(Order.order_id).label('order_count')
+        ).filter(
+            Order.created_at >= start_date
+        ).group_by(
+            extract('year', Order.created_at),
+            extract('quarter', Order.created_at)
+        ).order_by(
+            extract('year', Order.created_at),
+            extract('quarter', Order.created_at)
+        ).all()
+        
+        result = []
+        for row in revenue_data:
+            quarter_name = f"Q{int(row.quarter)} {int(row.year)}"
+            result.append({
+                "period": quarter_name,
+                "revenue": float(row.revenue or 0),
+                "order_count": int(row.order_count or 0)
+            })
+            
+    else:  # yearly
+        # Last 5 years
+        start_date = now - timedelta(days=1825)
+        revenue_data = db.query(
+            extract('year', Order.created_at).label('year'),
+            func.sum(Order.total_price).label('revenue'),
+            func.count(Order.order_id).label('order_count')
+        ).filter(
+            Order.created_at >= start_date
+        ).group_by(
+            extract('year', Order.created_at)
+        ).order_by(
+            extract('year', Order.created_at)
+        ).all()
+        
+        result = []
+        for row in revenue_data:
+            result.append({
+                "period": str(int(row.year)),
+                "revenue": float(row.revenue or 0),
+                "order_count": int(row.order_count or 0)
+            })
+    
+    return result
+
 @router.get("/stats/top-products")
 async def get_top_products(
-    period: str = Query(default="monthly", regex="^(weekly|monthly|yearly|all)$"),
+    period: str = Query(default="monthly", regex="^(weekly|monthly|quarterly|yearly|all)$"),
     limit: int = Query(default=10, ge=1, le=50),
     admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -453,6 +541,8 @@ async def get_top_products(
         start_date = now - timedelta(days=7)
     elif period == "monthly":
         start_date = now - timedelta(days=30)
+    elif period == "quarterly":
+        start_date = now - timedelta(days=90)
     elif period == "yearly":
         start_date = now - timedelta(days=365)
     else:  # all
@@ -661,6 +751,7 @@ class VoucherUpdateRequest(BaseModel):
 
 @router.get("/vouchers")
 async def get_all_vouchers(
+    show_inactive: bool = Query(default=True, description="Include inactive vouchers"),
     admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
@@ -668,7 +759,13 @@ async def get_all_vouchers(
     if not admin.is_super_admin:
         raise HTTPException(status_code=403, detail="Super admin access required")
     
-    vouchers = db.query(Voucher).order_by(desc(Voucher.created_at)).all()
+    query = db.query(Voucher)
+    
+    # Filter out inactive vouchers if requested
+    if not show_inactive:
+        query = query.filter(Voucher.is_active == True)
+    
+    vouchers = query.order_by(desc(Voucher.created_at)).all()
     
     # Get current time in Philippines timezone
     from app.core.timezone import get_philippine_time
@@ -734,6 +831,11 @@ async def create_voucher(
     if valid_until <= valid_from:
         raise HTTPException(status_code=400, detail="End date must be after start date")
     
+    # Determine if voucher should be active based on current date
+    from app.core.timezone import get_philippine_time
+    now = get_philippine_time()
+    is_active = valid_from <= now <= valid_until
+    
     # Create voucher
     voucher = Voucher(
         voucher_code=voucher_data.voucher_code.upper(),
@@ -745,7 +847,7 @@ async def create_voucher(
         valid_from=valid_from,
         valid_until=valid_until,
         usage_limit=voucher_data.usage_limit,
-        is_active=voucher_data.is_active
+        is_active=is_active
     )
     
     db.add(voucher)

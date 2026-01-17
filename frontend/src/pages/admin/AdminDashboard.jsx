@@ -4,7 +4,9 @@ import { adminAPI } from '../../api/api';
 import './AdminDashboard.css';
 import { useAuth } from '../../context/AuthContext';
 import EditPriceModal from '../../components/EditPriceModal';
-import AdminAudit from './AdminAudit'; 
+import AdminAudit from './AdminAudit';
+import RevenueChart from '../../components/RevenueChart';
+import TopProductsChart from '../../components/TopProductsChart'; 
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -281,6 +283,27 @@ const AdminDashboard = () => {
                   <h3>₱{stats?.total_revenue?.toFixed(2) || '0.00'}</h3>
                   <p>Total Revenue</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Analytics Charts */}
+            <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
+              <div style={{ 
+                background: 'white', 
+                padding: '24px', 
+                borderRadius: '12px', 
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+              }}>
+                <RevenueChart />
+              </div>
+              
+              <div style={{ 
+                background: 'white', 
+                padding: '24px', 
+                borderRadius: '12px', 
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
+              }}>
+                <TopProductsChart />
               </div>
             </div>
 
