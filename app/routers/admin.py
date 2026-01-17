@@ -252,6 +252,10 @@ async def update_discount(
 
     # Audit Log
     try:
+        # If no previous discount, show original price as "before" value
+        before_value = float(old_discount) if old_discount else float(product.product_price)
+        after_value = float(product.product_discount_price) if product.product_discount_price else float(product.product_price)
+        
         audit = AuditLog(
             actor_email=admin.account_email,
             action='UPDATE_DISCOUNT',
@@ -263,8 +267,9 @@ async def update_discount(
                 'new_discount': float(product.product_discount_price) if product.product_discount_price else None,
                 'old_sale_status': old_sale_status,
                 'new_sale_status': product.is_on_sale,
-                'before': float(old_discount) if old_discount else None,
-                'after': float(product.product_discount_price) if product.product_discount_price else None
+                'before': before_value,
+                'after': after_value,
+                'original_price': float(product.product_price)
             })
         )
         db.add(audit)
@@ -665,8 +670,21 @@ async def get_all_vouchers(
     
     vouchers = db.query(Voucher).order_by(desc(Voucher.created_at)).all()
     
+    # Get current time in Philippines timezone
+    from app.core.timezone import get_philippine_time
+    now = get_philippine_time()
+    
     voucher_list = []
     for voucher in vouchers:
+        # Check if voucher is currently active based on dates
+        is_active_now = voucher.is_active
+        if voucher.is_active:
+            # Also check date validity
+            if voucher.valid_from and now < voucher.valid_from:
+                is_active_now = False  # Not yet started
+            elif voucher.valid_until and now > voucher.valid_until:
+                is_active_now = False  # Already expired
+        
         voucher_list.append({
             "voucher_code": voucher.voucher_code,
             "description": voucher.description,
@@ -679,6 +697,7 @@ async def get_all_vouchers(
             "usage_limit": voucher.usage_limit,
             "usage_count": voucher.usage_count,
             "is_active": voucher.is_active,
+            "is_active_now": is_active_now,
             "created_at": voucher.created_at.isoformat() if voucher.created_at else None
         })
     
@@ -739,7 +758,13 @@ async def create_voucher(
         action="CREATE",
         entity_type="Voucher",
         entity_id=None,
-        details=f"Created voucher: {voucher.voucher_code}"
+        details=json.dumps({
+            'voucher_code': voucher.voucher_code,
+            'product_name': f"Voucher: {voucher.voucher_code}",
+            'description': voucher.description,
+            'discount_type': voucher.discount_type,
+            'discount_value': float(voucher.discount_value)
+        })
     )
     db.add(log_entry)
     db.commit()
@@ -798,7 +823,15 @@ async def update_voucher(
         action="UPDATE",
         entity_type="Voucher",
         entity_id=None,
-        details=f"Updated voucher: {voucher.voucher_code}"
+        details=json.dumps({
+            'voucher_code': voucher.voucher_code,
+            'product_name': f"Voucher: {voucher.voucher_code}",
+            'description': voucher.description,
+            'updated_fields': {
+                'discount_value': float(voucher.discount_value) if voucher.discount_value else None,
+                'is_active': voucher.is_active
+            }
+        })
     )
     db.add(log_entry)
     db.commit()
@@ -840,7 +873,12 @@ async def delete_voucher(
         action="DELETE",
         entity_type="Voucher",
         entity_id=None,
-        details=f"Deleted/deactivated voucher: {voucher_code}"
+        details=json.dumps({
+            'voucher_code': voucher_code,
+            'product_name': f"Voucher: {voucher_code}",
+            'action_taken': 'deactivated' if usage_count > 0 else 'deleted',
+            'usage_count': usage_count
+        })
     )
     db.add(log_entry)
     db.commit()

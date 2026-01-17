@@ -280,7 +280,11 @@ class OrderResponse(BaseModel):
     
     @property
     def shipping_fee(self):
-        return float(self.total_price) - self.subtotal
+        # Shipping fee = total_price - subtotal + voucher_discount
+        # Because: total_price = subtotal + shipping - voucher
+        # So: shipping = total_price - subtotal + voucher
+        voucher = float(self.voucher_discount) if self.voucher_discount else 0.0
+        return float(self.total_price) - self.subtotal + voucher
     
     @property
     def total_item_count(self):

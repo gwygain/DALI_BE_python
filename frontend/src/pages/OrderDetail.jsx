@@ -158,7 +158,8 @@ const OrderDetail = () => {
       },
       0
     ) || 0;
-  const shippingFee = order.total_price - subtotal;
+  const voucherDiscount = parseFloat(order.voucher_discount || 0);
+  const shippingFee = parseFloat(order.shipping_fee || 0);
 
   return (
     <main className="order-detail-page">
@@ -223,6 +224,12 @@ const OrderDetail = () => {
                   <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
+                {voucherDiscount > 0 && order.voucher_code && (
+                  <div className="summary-line" style={{ color: '#22c55e' }}>
+                    <span>Voucher ({order.voucher_code})</span>
+                    <span>-{formatPrice(voucherDiscount)}</span>
+                  </div>
+                )}
                 <div className="summary-line">
                   <span>Shipping</span>
                   <span>{formatPrice(shippingFee)}</span>

@@ -214,7 +214,7 @@ const OrderDetailsPage = () => {
               {/* 1. Subtotal (Original Price) */}
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>₱{order.subtotal ? parseFloat(order.subtotal).toFixed(2) : (parseFloat(order.total_price) - parseFloat(order.shipping_fee || 0) + parseFloat(order.voucher_discount || 0)).toFixed(2)}</span>
+                <span>₱{parseFloat(order.subtotal || 0).toFixed(2)}</span>
               </div>
 
               {/* 2. Voucher (if applied) */}
