@@ -4,6 +4,8 @@
 
 This manual provides step-by-step instructions for using the DALI E-Commerce platform, whether you're a customer shopping online or an administrator managing the store.
 
+> 📍 **Important**: DALI currently serves **Metro Manila only**. All delivery addresses and pickup stores must be within Metro Manila.
+
 ---
 
 ## 📋 Table of Contents
@@ -215,39 +217,47 @@ You can browse products and add items to cart without an account:
 
 ### 4.2 Selecting Delivery Method
 
+**⚠️ Important: DALI currently delivers only within Metro Manila**
+
 You have **three delivery options**:
 
 #### **Option 1: Standard Delivery**
-- **Description**: Home delivery at normal speed
+- **Description**: Home delivery at normal speed (within Metro Manila only)
+- **Delivery Time**: 2-3 days
 - **Cost**: ₱50 base fee + ₱20 per kilometer from warehouse
 - **Process**:
   1. Select **"Standard Delivery"**
-  2. Choose or add a delivery address
+  2. Choose or add a delivery address (must be in Metro Manila)
   3. System calculates distance-based shipping fee
   4. Total is updated with shipping cost
 
 #### **Option 2: Priority Delivery**
-- **Description**: Faster home delivery
+- **Description**: Faster home delivery (within Metro Manila only)
+- **Delivery Time**: Same day delivery
 - **Cost**: Standard delivery fee + ₱100 priority surcharge
 - **Process**: Same as Standard Delivery
 
 #### **Option 3: Click & Collect (Pickup)**
-- **Description**: Pick up from nearest store
-- **Cost**: Fixed store pickup fee (usually ₱20-50)
+- **Description**: Pick up from DALI stores in Metro Manila
+- **Pickup Time**: 2-3 days after order confirmation
+- **Cost**: Free pickup (no delivery fee)
 - **Process**:
-  1. Select **"Pickup"** option
-  2. Choose from available stores
+  1. Select **"Pickup Delivery"** option
+  2. Choose from available Metro Manila stores
   3. See store location on map
-  4. Pickup fee is added to total
+  4. Receive notification when order is ready for pickup
 
 ---
 
 ### 4.3 Managing Delivery Addresses
 
+**📍 Note**: During checkout, you can only add Metro Manila addresses. The province dropdown will automatically be set to Metro Manila.
+
 #### **Add New Address**
 1. On checkout page, click **"Add New Address"**
 2. Fill in the form:
-   - **Province** (select from dropdown)
+   - **Province** - Pre-selected as Metro Manila (cannot be changed during checkout)
+   - **City/Municipality** - Choose from Metro Manila cities (Caloocan, Las Piñas, Makati, Malabon, Mandaluyong, Manila, Marikina, Muntinlupa, Navotas, Parañaque, Pasay, Pasig, Quezon City, San Juan, Taguig, Valenzuela, Pateros)
    - **City** (updates based on province)
    - **Barangay** (updates based on city)
    - **Street/Building/House Number**

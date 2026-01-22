@@ -2,6 +2,8 @@
 
 > **Full-stack e-commerce solution** for grocery and everyday essentials with multi-delivery options, payment integration, and comprehensive admin management.
 
+> 📍 **Service Area**: Currently serving **Metro Manila only** for all delivery and pickup options.
+
 ---
 
 ## 📋 Table of Contents
@@ -69,6 +71,7 @@ DALI (Everyday Grocery) is designed to **modernize the grocery shopping experien
 - **Profile Management** - Update name, phone, profile picture
 - **Password Change** with old password verification
 - **Multiple Address Management** with Philippine location hierarchy (Province → City → Barangay)
+- **Metro Manila Address Restriction** - Only Metro Manila addresses accepted for delivery
 
 #### Shopping Experience
 - **Product Browsing** by category and subcategory
@@ -82,10 +85,12 @@ DALI (Everyday Grocery) is designed to **modernize the grocery shopping experien
 - **Shopping Cart** - Add, remove, update quantities
 - **Guest Cart** - Shop without account (session-based)
 - **Cart Merge** - Combine guest cart with user cart on login
+- **Metro Manila Service Area** - Delivery restricted to Metro Manila addresses only
 - **Delivery Options**:
-  - **Standard Delivery** - Distance-based shipping fee (₱50 base + ₱20/km)
-  - **Priority Delivery** - Faster delivery with additional fee (₱100)
-  - **Click & Collect** - Pickup at nearby store with fixed fee
+  - **Standard Delivery** - Distance-based shipping fee (₱50 base + ₱20/km) within Metro Manila
+  - **Priority Delivery** - Faster delivery with additional fee (₱100) within Metro Manila
+  - **Click & Collect** - Pickup at DALI stores located in Metro Manila
+- **Smart Address Validation** - Automatic filtering to Metro Manila locations during checkout
 - **Voucher System** - Apply discount codes at checkout
 - **Payment Methods**:
   - **Maya (PayMaya)** - Digital payment with redirect flow

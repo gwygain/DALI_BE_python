@@ -40,8 +40,11 @@ app/
 - Payment method (`COD`, `Maya`) determines subsequent flow
 
 **Shipping Calculation**:
+- **Metro Manila Service Area**: All delivery and pickup restricted to Metro Manila only
 - If address delivery: geodesic distance (warehouse to address) × rate = fee (`ShippingService`)
-- If pickup: fixed fee per store
+  - Address validation: province_id=1 AND city_id in Metro Manila cities list
+- If pickup: Store must be within Metro Manila boundaries (lat/lng validation)
+- Frontend auto-filters to Metro Manila addresses/stores during checkout
 
 ## Critical Patterns & Conventions
 
