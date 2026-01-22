@@ -29,13 +29,21 @@ const EditPriceModal = ({ product, open, onClose, onSaved }) => {
       <div className="modal">
         <h3>Edit Price - {product.product_name}</h3>
         <div className="modal-body">
-          <label>Price</label>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>Price</label>
           <input
             type="number"
             step="0.01"
             min="0"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '16px',
+              boxSizing: 'border-box'
+            }}
           />
         </div>
         <div className="modal-actions">

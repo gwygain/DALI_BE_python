@@ -473,7 +473,8 @@ const Checkout = () => {
                     border: '1px solid #ddd',
                     borderRadius: '8px',
                     fontSize: '0.95rem',
-                    marginBottom: '1rem'
+                    marginBottom: '1rem',
+                    boxSizing: 'border-box'
                   }}
                 />
                 <div id="store-list-results" style={{ maxHeight: '300px', overflowY: 'auto' }}>
