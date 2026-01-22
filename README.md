@@ -4,10 +4,13 @@
 
 > 📍 **Service Area**: Currently serving **Metro Manila only** for all delivery and pickup options.
 
+> 🚀 **New to DALI?** See [QUICK_START.md](QUICK_START.md) for easy setup instructions!
+
 ---
 
 ## 📋 Table of Contents
 
+- [Quick Start](#-quick-start)
 - [Objective](#-objective)
 - [System Purpose](#-system-purpose)
 - [Features](#-features)
@@ -20,6 +23,43 @@
 - [Security](#-security)
 - [Deployment](#-deployment)
 - [Troubleshooting](#-troubleshooting)
+
+---
+
+## 🚀 Quick Start
+
+**Want to get DALI running quickly?** Follow these simple steps:
+
+1. **Run automated setup:**
+   ```bash
+   python setup.py
+   ```
+
+2. **Configure `.env` file** (created by setup script)
+
+3. **Setup database:**
+   ```bash
+   psql -U postgres -c "CREATE DATABASE dali_db;"
+   psql -U postgres -d dali_db -f UNIFIED_DATABASE_INIT.sql
+   psql -U postgres -d dali_db -f data.sql
+   ```
+
+4. **Start backend & frontend:**
+   ```bash
+   # Terminal 1 - Backend
+   venv\Scripts\activate  # Windows
+   uvicorn main:app --reload
+   
+   # Terminal 2 - Frontend
+   cd frontend
+   npm run dev
+   ```
+
+5. **Access the app:**
+   - Frontend: http://localhost:5173
+   - Admin: http://localhost:5173/admin (admin@dali.com / Admin@123)
+
+**📖 For detailed setup instructions, see [QUICK_START.md](QUICK_START.md)**
 
 ---
 
