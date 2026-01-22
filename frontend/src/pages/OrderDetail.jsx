@@ -291,14 +291,14 @@ const OrderDetail = () => {
                   <div>
                     {/* Show unit_price (price at purchase) if available */}
                     {item.unit_price && parseFloat(item.unit_price) < parseFloat(item.product.product_price) ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.85em' }}>
+                      <>
+                        <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.85em', display: 'block' }}>
                           {formatPrice(item.product.product_price)}
                         </span>
-                        <span style={{ color: '#a1127c', fontWeight: '600' }}>
+                        <span style={{ color: '#a1127c', fontWeight: '600', display: 'block' }}>
                           {formatPrice(item.unit_price)}
                         </span>
-                      </div>
+                      </>
                     ) : (
                       formatPrice(item.unit_price ?? item.product.product_price)
                     )}

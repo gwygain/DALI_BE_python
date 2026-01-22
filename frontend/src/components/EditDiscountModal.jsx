@@ -89,7 +89,7 @@ const EditDiscountModal = ({ product, open, onClose, onSaved }) => {
           </div>
 
           {/* Discount Price Input */}
-          <div className="form-group" style={{ opacity: isOnSale ? 1 : 0.5 }}>
+          <div className="form-group" style={{ opacity: isOnSale ? 1 : 0.5, marginBottom: '8px' }}>
             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Discounted Price (₱)
             </label>
@@ -107,7 +107,8 @@ const EditDiscountModal = ({ product, open, onClose, onSaved }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '6px',
-                fontSize: '16px'
+                fontSize: '16px',
+                boxSizing: 'border-box'
               }}
             />
           </div>
