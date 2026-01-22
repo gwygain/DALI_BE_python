@@ -942,7 +942,8 @@ class VoucherCreateRequest(BaseModel):
     max_discount_amount: Optional[float] = None
     valid_from: str  # ISO datetime string
     valid_until: str  # ISO datetime string
-    usage_limit: Optional[int] = None
+    usage_limit_per_user: Optional[int] = None  # Maximum times a single user can use this voucher
+    total_usage_limit: Optional[int] = None  # Maximum total uses across all users
     is_active: bool = True
 
 
@@ -953,7 +954,8 @@ class VoucherUpdateRequest(BaseModel):
     max_discount_amount: Optional[float] = None
     valid_from: Optional[str] = None
     valid_until: Optional[str] = None
-    usage_limit: Optional[int] = None
+    usage_limit_per_user: Optional[int] = None  # Maximum times a single user can use this voucher
+    total_usage_limit: Optional[int] = None  # Maximum total uses across all users
     is_active: Optional[bool] = None
 
 
@@ -999,7 +1001,8 @@ async def get_all_vouchers(
             "max_discount_amount": float(voucher.max_discount_amount) if voucher.max_discount_amount else None,
             "valid_from": voucher.valid_from.isoformat() if voucher.valid_from else None,
             "valid_until": voucher.valid_until.isoformat() if voucher.valid_until else None,
-            "usage_limit": voucher.usage_limit,
+            "usage_limit_per_user": voucher.usage_limit_per_user,
+            "total_usage_limit": voucher.total_usage_limit,
             "usage_count": voucher.usage_count,
             "is_active": voucher.is_active,
             "is_active_now": is_active_now,
@@ -1054,7 +1057,8 @@ async def create_voucher(
         max_discount_amount=voucher_data.max_discount_amount,
         valid_from=valid_from,
         valid_until=valid_until,
-        usage_limit=voucher_data.usage_limit,
+        usage_limit_per_user=voucher_data.usage_limit_per_user,
+        total_usage_limit=voucher_data.total_usage_limit,
         is_active=is_active
     )
     
@@ -1109,8 +1113,10 @@ async def update_voucher(
         voucher.min_purchase_amount = voucher_data.min_purchase_amount
     if voucher_data.max_discount_amount is not None:
         voucher.max_discount_amount = voucher_data.max_discount_amount
-    if voucher_data.usage_limit is not None:
-        voucher.usage_limit = voucher_data.usage_limit
+    if voucher_data.usage_limit_per_user is not None:
+        voucher.usage_limit_per_user = voucher_data.usage_limit_per_user
+    if voucher_data.total_usage_limit is not None:
+        voucher.total_usage_limit = voucher_data.total_usage_limit
     if voucher_data.is_active is not None:
         voucher.is_active = voucher_data.is_active
     

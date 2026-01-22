@@ -399,8 +399,9 @@ class Voucher(Base):
     max_discount_amount = Column(Numeric(10, 2), nullable=True)
     valid_from = Column(DateTime, nullable=False)
     valid_until = Column(DateTime, nullable=False)
-    usage_limit = Column(Integer, nullable=True)
-    usage_count = Column(Integer, default=0, nullable=False)
+    usage_limit_per_user = Column(Integer, nullable=True)  # How many times each user can use
+    total_usage_limit = Column(Integer, nullable=True)  # Total uses across all users
+    usage_count = Column(Integer, default=0, nullable=False)  # Current usage count
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=get_philippine_time)
     updated_at = Column(DateTime, default=get_philippine_time, onupdate=get_philippine_time)

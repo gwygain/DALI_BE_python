@@ -78,14 +78,21 @@ class OrderService:
                 valid_until = voucher.valid_until.replace(tzinfo=None) if voucher.valid_until.tzinfo else voucher.valid_until
                 
                 if valid_from <= now <= valid_until:
+                    # Check global usage limit first
+                    if voucher.total_usage_limit:
+                        if voucher.usage_count >= voucher.total_usage_limit:
+                            # Voucher has reached global usage limit
+                            voucher_code = None
+                            voucher_discount = 0.0
+                    
                     # Check per-user usage limit
-                    if voucher.usage_limit:
+                    if voucher_code and voucher.usage_limit_per_user:
                         user_usage_count = db.query(VoucherUsage).filter(
                             VoucherUsage.voucher_code == voucher_code,
                             VoucherUsage.account_id == user.account_id
                         ).count()
                         
-                        if user_usage_count >= voucher.usage_limit:
+                        if user_usage_count >= voucher.usage_limit_per_user:
                             # User has reached their usage limit for this voucher
                             voucher_code = None
                             voucher_discount = 0.0

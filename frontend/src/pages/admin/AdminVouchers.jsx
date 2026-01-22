@@ -17,7 +17,8 @@ const AdminVouchers = () => {
         max_discount_amount: '',
         valid_from: '',
         valid_until: '',
-        usage_limit: '',
+        usage_limit_per_user: '',
+        total_usage_limit: '',
         is_active: true
     });
 
@@ -72,7 +73,8 @@ const AdminVouchers = () => {
                 discount_value: parseFloat(formData.discount_value),
                 min_purchase_amount: formData.min_purchase_amount ? parseFloat(formData.min_purchase_amount) : null,
                 max_discount_amount: formData.max_discount_amount ? parseFloat(formData.max_discount_amount) : null,
-                usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null
+                usage_limit_per_user: formData.usage_limit_per_user ? parseInt(formData.usage_limit_per_user) : null,
+                total_usage_limit: formData.total_usage_limit ? parseInt(formData.total_usage_limit) : null
             };
 
             // Remove voucher_code for edit requests
@@ -117,7 +119,8 @@ const AdminVouchers = () => {
             max_discount_amount: voucher.max_discount_amount || '',
             valid_from: voucher.valid_from ? voucher.valid_from.substring(0, 16) : '',
             valid_until: voucher.valid_until ? voucher.valid_until.substring(0, 16) : '',
-            usage_limit: voucher.usage_limit || '',
+            usage_limit_per_user: voucher.usage_limit_per_user || '',
+            total_usage_limit: voucher.total_usage_limit || '',
             is_active: voucher.is_active
         });
         setShowModal(true);
@@ -183,7 +186,8 @@ const AdminVouchers = () => {
             max_discount_amount: '',
             valid_from: '',
             valid_until: '',
-            usage_limit: '',
+            usage_limit_per_user: '',
+            total_usage_limit: '',
             is_active: true
         });
     };
@@ -239,6 +243,7 @@ const AdminVouchers = () => {
                             <th>Valid Until</th>
                             <th>Total Uses</th>
                             <th>Per User Limit</th>
+                            <th>Total Limit</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -257,7 +262,8 @@ const AdminVouchers = () => {
                                     <td>{voucher.min_purchase_amount ? `₱${voucher.min_purchase_amount}` : '-'}</td>
                                     <td>{new Date(voucher.valid_until).toLocaleDateString()}</td>
                                     <td>{voucher.usage_count} times</td>
-                                    <td>{voucher.usage_limit ? `${voucher.usage_limit} per user` : 'Unlimited'}</td>
+                                    <td>{voucher.usage_limit_per_user ? `${voucher.usage_limit_per_user}` : 'Unlimited'}</td>
+                                    <td>{voucher.total_usage_limit ? `${voucher.total_usage_limit}` : 'Unlimited'}</td>
                                     <td>{getStatusBadge(voucher)}</td>
                                     <td className="actions-cell">
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -384,14 +390,28 @@ const AdminVouchers = () => {
                                         min="0"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="form-row">
                                 <div className="form-group">
-                                    <label>Usage Limit</label>
+                                    <label>Max Uses Per User</label>
                                     <input
                                         type="number"
-                                        name="usage_limit"
-                                        value={formData.usage_limit}
+                                        name="usage_limit_per_user"
+                                        value={formData.usage_limit_per_user}
                                         onChange={handleInputChange}
-                                        placeholder="Optional"
+                                        placeholder="Optional (unlimited if empty)"
+                                        min="1"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Total Global Uses</label>
+                                    <input
+                                        type="number"
+                                        name="total_usage_limit"
+                                        value={formData.total_usage_limit}
+                                        onChange={handleInputChange}
+                                        placeholder="Optional (unlimited if empty)"
                                         min="1"
                                     />
                                 </div>
