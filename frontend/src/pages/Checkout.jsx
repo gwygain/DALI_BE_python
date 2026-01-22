@@ -43,7 +43,7 @@ const Checkout = () => {
         setLoading(true);
         const [addressesData, storesData] = await Promise.all([
           addressService.getAddresses(),
-          storeService.getStores(),
+          storeService.getStores('', true), // Load only Metro Manila stores
         ]);
         setAddresses(addressesData);
         setStores(storesData);
@@ -275,6 +275,24 @@ const Checkout = () => {
               <p className="sub-header">Select Saved Addresses</p>
             </div>
 
+            {/* Metro Manila Restriction Notice */}
+            <div className="delivery-restriction-notice" style={{
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '20px' }}>📍</span>
+              <div>
+                <strong>Delivery Restriction:</strong> We currently only deliver to addresses within Metro Manila.
+                Please ensure your address is in Metro Manila to proceed with checkout.
+              </div>
+            </div>
+
             <div className="address-selection">
               {addresses.length === 0 && !addingAddress && (
                 <div className="no-address-notice">
@@ -322,6 +340,7 @@ const Checkout = () => {
                   onSubmit={handleAddressCreate}
                   onCancel={() => setAddingAddress(false)}
                   submitLabel="Add Address"
+                  metroManilaOnly={true}
                 />
               ) : (
                 <button
@@ -425,6 +444,23 @@ const Checkout = () => {
             {deliveryMethod === 'Pickup Delivery' && (
               <div id="store-pickup-selector" style={{ display: 'block' }}>
                 <h4>Select Pickup Store</h4>
+                
+                {/* Metro Manila Stores Notice */}
+                <div style={{
+                  background: '#e7f3ff',
+                  border: '1px solid #2196F3',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '15px',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>ℹ️</span>
+                  <span>Showing only DALI stores located in Metro Manila</span>
+                </div>
+
                 <input
                   type="text"
                   className="store-search-input"

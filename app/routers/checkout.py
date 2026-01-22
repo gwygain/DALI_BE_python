@@ -76,6 +76,13 @@ async def set_address(
     if not address:
         raise HTTPException(status_code=404, detail="Address not found")
     
+    # Validate address is within Metro Manila
+    if not ShippingService.is_metro_manila(address):
+        raise HTTPException(
+            status_code=400,
+            detail="We currently only deliver to Metro Manila addresses. Please select or add an address within Metro Manila."
+        )
+    
     checkout_details = get_checkout_details(request)
     checkout_details["addressId"] = address_data.address_id
     request.session["checkoutDetails"] = checkout_details
@@ -105,12 +112,27 @@ async def set_shipping(
         if not store:
             raise HTTPException(status_code=404, detail="Store not found")
         
+        # Verify store is in Metro Manila
+        if not ShippingService.is_store_in_metro_manila(store):
+            raise HTTPException(
+                status_code=400,
+                detail="Selected store is not in Metro Manila. Please select a store within Metro Manila."
+            )
+        
         checkout_details["storeId"] = shipping_data.store_id
         checkout_details["shippingFee"] = 0.0
     else:
         checkout_details.pop("storeId", None)
         address_id = checkout_details.get("addressId")
         address = db.query(Address).filter(Address.address_id == address_id).first()
+        
+        # Validate address is within Metro Manila
+        if not ShippingService.is_metro_manila(address):
+            raise HTTPException(
+                status_code=400,
+                detail="We currently only deliver to Metro Manila addresses. Please select or add an address within Metro Manila."
+            )
+        
         checkout_details["shippingFee"] = ShippingService.calculate_shipping_fee(
             address, shipping_data.delivery_method
         )

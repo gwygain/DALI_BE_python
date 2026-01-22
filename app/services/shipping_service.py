@@ -18,6 +18,27 @@ class ShippingService:
     PER_KM_RATE = 20.0  # Rate per kilometer (₱20/km)
     PRIORITY_FEE_ADDITION = 100.0  # Additional fee for priority delivery
     
+    # Metro Manila city IDs (province_id = 1)
+    METRO_MANILA_CITY_IDS = {
+        1356,  # Caloocan City
+        1360,  # Las Piñas City
+        1361,  # Makati City
+        1357,  # Malabon City
+        1351,  # Mandaluyong City
+        1350,  # Manila
+        1352,  # Marikina City
+        1362,  # Muntinlupa City
+        1358,  # Navotas City
+        1353,  # Parañaque City
+        1354,  # Pasay City
+        1355,  # Pasig City
+        1359,  # Quezon City
+        1363,  # San Juan City
+        1364,  # Taguig City
+        1365,  # Valenzuela City
+        1366,  # Pateros
+    }
+    
     @staticmethod
     def calculate_shipping_fee(address: Address, delivery_method: str) -> float:
         """Calculate shipping fee based on distance and delivery method.
@@ -56,3 +77,39 @@ class ShippingService:
         customer_coords = (float(address.latitude), float(address.longitude))
         
         return round(geodesic(warehouse_coords, customer_coords).kilometers, 2)
+    
+    @staticmethod
+    def is_metro_manila(address: Address) -> bool:
+        """Check if address is within Metro Manila.
+        
+        Returns:
+            True if address is in Metro Manila (province_id=1 and city is in Metro Manila cities)
+            False otherwise
+        """
+        # Check if province is Metro Manila (province_id = 1)
+        if address.province_id != 1:
+            return False
+        
+        # Check if city is one of the Metro Manila cities
+        return address.city_id in ShippingService.METRO_MANILA_CITY_IDS
+    
+    @staticmethod
+    def is_store_in_metro_manila(store) -> bool:
+        """Check if store is within Metro Manila based on coordinates.
+        
+        Metro Manila approximate boundaries:
+        - Latitude: 14.4° to 14.8° N
+        - Longitude: 120.9° to 121.15° E
+        
+        Returns:
+            True if store coordinates are within Metro Manila bounds
+            False otherwise
+        """
+        if not store.store_lat or not store.store_lng:
+            return False
+        
+        lat = float(store.store_lat)
+        lng = float(store.store_lng)
+        
+        # Metro Manila boundaries
+        return (14.4 <= lat <= 14.8) and (120.9 <= lng <= 121.15)

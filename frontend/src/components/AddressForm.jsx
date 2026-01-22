@@ -75,6 +75,7 @@ const AddressForm = ({
   onSubmit,
   onCancel,
   submitLabel = 'Save Address',
+  metroManilaOnly = false, // New prop to limit to Metro Manila only
 }) => {
   const [formData, setFormData] = useState({
     additional_info: '',
@@ -114,13 +115,24 @@ const AddressForm = ({
     const loadProvinces = async () => {
       try {
         const data = await locationService.getProvinces();
-        setProvinces(Array.isArray(data) ? data : []);
+        let provincesData = Array.isArray(data) ? data : [];
+        
+        // If metroManilaOnly is true, filter to only Metro Manila (province_id = 1)
+        if (metroManilaOnly) {
+          provincesData = provincesData.filter(p => p.province_id === 1);
+          // Auto-select Metro Manila if it's the only option
+          if (provincesData.length === 1 && !formData.province_id) {
+            setFormData(prev => ({ ...prev, province_id: 1 }));
+          }
+        }
+        
+        setProvinces(provincesData);
       } catch (err) {
         console.error('Error loading provinces:', err);
       }
     };
     loadProvinces();
-  }, []);
+  }, [metroManilaOnly]);
 
   // Load Cities
   useEffect(() => {
@@ -232,6 +244,18 @@ const AddressForm = ({
       <form className="address-form" onSubmit={handleSubmit}>
         {error && <div className="auth-error" style={{color: 'red', marginBottom: '15px'}}>{error}</div>}
 
+        {/* Metro Manila Restriction Notice */}
+        <div style={{
+          background: '#e7f3ff',
+          border: '1px solid #2196F3',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '15px',
+          fontSize: '14px'
+        }}>
+          <strong>📍 Delivery Area:</strong> We currently only deliver to Metro Manila addresses.
+        </div>
+
         <div className="form-group">
           <label htmlFor="phone_number">Phone Number</label>
           <input
@@ -253,9 +277,10 @@ const AddressForm = ({
             options={provinces}
             value={formData.province_id}
             onChange={(val) => handleChange({ target: { name: 'province_id', value: val } })}
-            placeholder="Select Province"
+            placeholder={metroManilaOnly && provinces.length === 1 ? "Metro Manila" : "Select Province"}
             valueKey="province_id"
             labelKey="province_name"
+            disabled={metroManilaOnly && provinces.length === 1}
           />
         </div>
 

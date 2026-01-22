@@ -7,6 +7,7 @@ from typing import Optional, List
 from app.core.database import get_db
 from app.models import Store
 from app.schemas import StoreResponse
+from app.services.shipping_service import ShippingService
 
 router = APIRouter(prefix="/api/stores", tags=["stores"])
 
@@ -14,15 +15,20 @@ router = APIRouter(prefix="/api/stores", tags=["stores"])
 @router.get("", response_model=List[StoreResponse])
 async def list_stores(
     search: Optional[str] = Query(None),
+    metro_manila_only: bool = Query(False, description="Filter stores to Metro Manila only"),
     db: Session = Depends(get_db)
 ):
-    """Get all stores with optional search."""
+    """Get all stores with optional search and Metro Manila filter."""
+    query = db.query(Store)
+    
     if search:
-        stores = db.query(Store).filter(
-            Store.store_name.ilike(f"%{search}%")
-        ).all()
-    else:
-        stores = db.query(Store).all()
+        query = query.filter(Store.store_name.ilike(f"%{search}%"))
+    
+    stores = query.all()
+    
+    # Filter to Metro Manila stores if requested
+    if metro_manila_only:
+        stores = [s for s in stores if ShippingService.is_store_in_metro_manila(s)]
     
     return stores
 
